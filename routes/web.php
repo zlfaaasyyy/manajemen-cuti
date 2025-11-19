@@ -22,6 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class);
     Route::get('/ajukan-cuti', [LeaveRequestController::class, 'create'])->name('leaves.create');
     Route::post('/ajukan-cuti', [LeaveRequestController::class, 'store'])->name('leaves.store');
+    Route::get('/verifikasi-leader', [LeaveRequestController::class, 'leaderIndex'])->name('leader.leaves.index');
+    // Proses Approve/Reject
+    Route::post('/verifikasi-leader/{leaveRequest}/action', [LeaveRequestController::class, 'leaderAction'])->name('leader.leaves.action');
 });
 
 require __DIR__.'/auth.php';

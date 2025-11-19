@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveRequest;
+use App\Models\Divisi;
 use Illuminate\Http\Request;
 use Carbon\Carbon; // Library untuk urus tanggal
 use Illuminate\Support\Facades\Auth;
@@ -82,11 +83,70 @@ class LeaveRequestController extends Controller
             'status' => 'pending', // Status awal [cite: 27]
         ]);
 
-        // G. Kurangi Kuota User (Langsung potong saat pending, nanti balik kalau reject) [cite: 37]
         if ($request->jenis_cuti == 'tahunan') {
             $user->decrement('kuota_cuti', $totalHari);
         }
 
         return redirect()->route('dashboard')->with('success', 'Pengajuan cuti berhasil dikirim!');
+    }
+
+    public function leaderIndex()
+    {
+        $leaderId = Auth::id();
+        
+        // 1. Cari semua divisi yang dipimpin oleh user yang sedang login
+        $managedDivisiIds = Divisi::where('ketua_divisi_id', $leaderId)->pluck('id');
+        
+        // 2. Ambil semua pengajuan cuti dari anggota divisi yang dipimpinnya,
+        // yang statusnya masih 'pending'
+        $pendingRequests = LeaveRequest::where('status', 'pending')
+            ->whereHas('user', function ($query) use ($managedDivisiIds, $leaderId) {
+                // Pengajuan hanya dari bawahan (bukan dari diri sendiri)
+                $query->where('id', '!=', $leaderId) 
+                    ->whereIn('divisi_id', $managedDivisiIds); 
+            })
+            ->with('user.divisi')
+            ->get();
+
+        return view('leaves.leader_index', compact('pendingRequests'));
+    }
+
+    // Aksi Approve/Reject oleh Ketua Divisi
+    public function leaderAction(Request $request, LeaveRequest $leaveRequest)
+    {
+        $action = $request->input('action'); // 'approve' atau 'reject'
+        $catatan = $request->input('catatan');
+
+        // Autorisasi Cek: Hanya Ketua Divisi yang bisa akses
+        if (Auth::user()->role !== 'ketua_divisi') {
+            return back()->with('error', 'Anda tidak berhak melakukan aksi ini.');
+        }
+
+        if ($action === 'approve') {
+            $leaveRequest->update([
+                'status' => 'approved_leader', // Status diteruskan ke HRD [cite: 27]
+                'catatan_leader' => $catatan, // Catatan opsional
+            ]);
+            $message = 'Pengajuan cuti berhasil disetujui dan diteruskan ke HRD.';
+
+        } elseif ($action === 'reject') {
+            $request->validate(['catatan' => 'required|min:10']); 
+
+            if ($leaveRequest->jenis_cuti == 'tahunan') {
+                $leaveRequest->user->increment('kuota_cuti', $leaveRequest->total_hari);
+            }
+
+            $leaveRequest->update([
+                'status' => 'rejected',
+                'catatan_penolakan' => $catatan,
+            ]);
+            $message = 'Pengajuan cuti berhasil ditolak.';
+
+        } else {
+            return back()->with('error', 'Aksi tidak valid.');
+        }
+
+        // Arahkan kembali ke halaman verifikasi
+        return redirect()->route('leader.leaves.index')->with('success', $message);
     }
 }
