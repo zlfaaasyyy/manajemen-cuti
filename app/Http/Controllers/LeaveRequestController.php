@@ -94,14 +94,14 @@ class LeaveRequestController extends Controller
     {
         $leaderId = Auth::id();
         
-        // 1. Cari semua divisi yang dipimpin oleh user yang sedang login
+        // 1. Cari semua ID divisi yang dipimpin oleh user yang sedang login
         $managedDivisiIds = Divisi::where('ketua_divisi_id', $leaderId)->pluck('id');
         
-        // 2. Ambil semua pengajuan cuti dari anggota divisi yang dipimpinnya,
-        // yang statusnya masih 'pending'
+        // 2. Ambil semua pengajuan cuti yang memenuhi kriteria:
         $pendingRequests = LeaveRequest::where('status', 'pending')
             ->whereHas('user', function ($query) use ($managedDivisiIds, $leaderId) {
-                // Pengajuan hanya dari bawahan (bukan dari diri sendiri)
+                // Pengajuan cuti harus berasal dari bawahan (bukan dari diri sendiri)
+                // DAN bawahan tersebut harus berada di dalam Divisi yang dipimpin leader.
                 $query->where('id', '!=', $leaderId) 
                     ->whereIn('divisi_id', $managedDivisiIds); 
             })
