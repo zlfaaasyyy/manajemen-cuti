@@ -5,83 +5,115 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Divisi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    // 1. Tampilkan Daftar User
     public function index()
     {
-        // Ambil semua user kecuali admin (opsional, agar admin tidak hapus diri sendiri)
-        $users = User::with('divisi')->where('role', '!=', 'admin')->get();
+        $users = User::with('divisi')->orderBy('name')->get();
         return view('users.index', compact('users'));
     }
 
-    // 2. Form Tambah User
     public function create()
     {
         $divisis = Divisi::all();
-        return view('users.create', compact('divisis'));
+        
+        // 1. Base Role (Tanpa Admin)
+        $roles = ['ketua_divisi', 'user'];
+
+        // 2. Cek apakah posisi HRD sudah terisi?
+        // Jika BELUM ada user dengan role 'hrd', masukkan opsi 'hrd' ke dropdown
+        if (!User::where('role', 'hrd')->exists()) {
+            array_unshift($roles, 'hrd'); // Masukkan ke urutan awal
+        }
+        
+        return view('users.create', compact('divisis', 'roles'));
     }
 
-    // 3. Simpan User Baru
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
-            'username' => 'required|unique:users',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
             'divisi_id' => 'nullable|exists:divisis,id',
+            'kuota_cuti' => 'nullable|integer|min:0',
         ]);
+
+        $kuota = $request->kuota_cuti;
+        if ($request->role === 'hrd' || $request->role === 'admin') {
+            $kuota = 0;
+        } elseif ($kuota === null) {
+            $kuota = 12;
+        }
 
         User::create([
             'name' => $request->name,
-            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'divisi_id' => $request->divisi_id,
-            'kuota_cuti' => 12, // Default 12 hari
+            'kuota_cuti' => $kuota,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User baru berhasil ditambahkan!');
     }
 
-    // 4. Form Edit User
     public function edit(User $user)
     {
-        $divisis = Divisi::all();
-        return view('users.edit', compact('user', 'divisis'));
+        $divisi = Divisi::all();
+        
+        // 1. Base Role (Tanpa Admin)
+        $roles = ['ketua_divisi', 'user'];
+
+        // 2. Logika HRD Cerdas untuk Edit:
+        // Opsi HRD ditampilkan jika:
+        // A. User yang sedang diedit INI memang HRD (agar role dia tidak hilang/berubah), ATAU
+        // B. Belum ada HRD lain di sistem.
+        
+        // Cek apakah ada HRD SELAIN user yang sedang diedit ini
+        $hrdLainExists = User::where('role', 'hrd')->where('id', '!=', $user->id)->exists();
+
+        if (!$hrdLainExists) {
+             array_unshift($roles, 'hrd');
+        }
+
+        return view('users.edit', compact('user', 'divisi', 'roles'));
     }
 
-    // 5. Update User
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name' => 'required',
-            'username' => ['required', Rule::unique('users')->ignore($user->id)],
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'role' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)], 
+            'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
+            'divisi_id' => 'nullable|exists:divisis,id',
+            'kuota_cuti' => 'required|integer|min:0',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        // Update data (password hanya diupdate jika diisi)
-        $data = $request->except('password');
+        $data = $request->only(['name', 'email', 'role', 'divisi_id', 'kuota_cuti']);
+
+        if ($request->role === 'hrd' || $request->role === 'admin') {
+            $data['kuota_cuti'] = 0;
+        }
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate!');
+        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
     }
 
-    // 6. Hapus User
     public function destroy(User $user)
     {
+        if (auth()->id() === $user->id) return back()->with('error', 'Gagal hapus akun sendiri.');
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User dihapus!');
+        return redirect()->route('users.index')->with('success', 'User dihapus.');
     }
 }

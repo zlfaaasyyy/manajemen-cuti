@@ -9,22 +9,28 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    // PERHATIAN: HasApiTokens SUDAH DIHAPUS dari sini
     use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
-        'name', 'email', 'password', 'username', 'role', 'no_hp', 'alamat', 'kuota_cuti', 'divisi_id'
+        'name',
+        'email',
+        'password',
+        'role',
+        'divisi_id', 
+        'kuota_cuti',
+        'foto_profil',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -32,25 +38,39 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
-    // User milik satu Divisi
+    // --- RELASI ELOQUENT ---
+
+    /**
+     * Relasi ke Divisi (User adalah Anggota)
+     * User ini adalah anggota dari SATU Divisi (Many-to-One).
+     */
     public function divisi()
     {
         return $this->belongsTo(Divisi::class);
     }
 
-    // User punya banyak pengajuan cuti
+    /**
+     * Relasi ke Divisi (User adalah Ketua)
+     * Relasi ini digunakan DivisiController untuk mengecek apakah user sudah menjadi ketua divisi lain.
+     */
+    public function divisiKetua()
+    {
+        // Mencari Divisi di mana kolom 'ketua_divisi_id' sama dengan ID user ini.
+        return $this->hasOne(Divisi::class, 'ketua_divisi_id');
+    }
+
+    /**
+     * Relasi ke LeaveRequest (Pengajuan Cuti)
+     */
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class);

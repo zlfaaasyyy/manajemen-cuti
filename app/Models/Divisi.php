@@ -2,24 +2,38 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Divisi extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    // Nama tabel
+    protected $table = 'divisis';
 
-    // Divisi punya banyak anggota
-    public function members()
-    {
-        return $this->hasMany(User::class);
-    }
+    // Kolom yang dapat diisi
+    protected $fillable = [
+        'nama',
+        'ketua_divisi_id', // Foreign key ke tabel users
+        'deskripsi',
+    ];
 
-    // Divisi dipimpin satu Ketua (User)
-    public function ketua()
+    /**
+     * Relasi ke User (Ketua Divisi)
+     * Satu Divisi memiliki SATU Ketua Divisi (Many-to-One).
+     */
+    public function ketuaDivisi()
     {
         return $this->belongsTo(User::class, 'ketua_divisi_id');
+    }
+
+    /**
+     * Relasi ke User (Anggota Divisi)
+     * Satu Divisi memiliki BANYAK User/Anggota (One-to-Many).
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class, 'divisi_id');
     }
 }
