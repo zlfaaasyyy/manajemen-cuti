@@ -8,67 +8,101 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
-            <!-- PESAN SUKSES -->
             @if (session('success'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
                     {{ session('success') }}
                 </div>
             @endif
 
-            <!-- KARTU STATISTIK -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                
-                <!-- Kartu 1: Sisa Kuota (Disembunyikan untuk HRD) -->
-                @if(auth()->user()->role !== 'hrd')
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-blue-500">
-                    <div class="text-gray-500 dark:text-gray-400 text-sm uppercase font-bold">Sisa Kuota Cuti</div>
-                    <div class="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                        {{ auth()->user()->kuota_cuti }} <span class="text-lg font-normal text-gray-500">Hari</span>
+            <!-- STATISTIK DINAMIS BERDASARKAN ROLE -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+                {{-- === TAMPILAN ADMIN === --}}
+                @if(auth()->user()->role === 'admin')
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Karyawan</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['total_karyawan'] ?? 0 }}</div>
                     </div>
-                </div>
-                @else
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-purple-500">
-                    <div class="text-gray-500 dark:text-gray-400 text-sm uppercase font-bold">Posisi</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white mt-2">HRD / Admin</div>
-                    <p class="text-xs text-gray-500 mt-1">Pengelola Sistem</p>
-                </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-green-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Divisi</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['total_divisi'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-purple-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Pengajuan Bulan Ini</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['pengajuan_bulan_ini'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-yellow-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Karyawan Baru (&lt; 1 Thn)</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['karyawan_baru'] ?? 0 }}</div>
+                    </div>
                 @endif
 
-                <!-- Kartu 2: Status Pending -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-yellow-500">
-                    <div class="text-gray-500 dark:text-gray-400 text-sm uppercase font-bold">Menunggu Proses</div>
-                    <div class="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                        {{ $statusPending }} <span class="text-lg font-normal text-gray-500">Pengajuan</span>
+                {{-- === TAMPILAN USER (KARYAWAN) === --}}
+                @if(auth()->user()->role === 'user')
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Sisa Kuota Cuti</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['sisa_kuota'] ?? 0 }} Hari</div>
                     </div>
-                </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-red-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Cuti Sakit</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['cuti_sakit_diajukan'] ?? 0 }} Kali</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-gray-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Divisi & Ketua</div>
+                        <div class="text-sm font-bold mt-1 dark:text-white">{{ $stats['nama_divisi'] }}</div>
+                        <div class="text-xs dark:text-gray-300">{{ $stats['nama_ketua'] }}</div>
+                    </div>
+                    <!-- Tombol Shortcut -->
+                    <a href="{{ route('leaves.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg shadow flex items-center justify-center font-bold transition duration-150 ease-in-out">
+                        + Ajukan Cuti Baru
+                    </a>
+                @endif
 
-                <!-- Kartu 3: Shortcut Menu -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-green-500 flex flex-col justify-center space-y-2">
-                    @if(auth()->user()->role === 'user' || auth()->user()->role === 'ketua_divisi')
-                        <a href="{{ route('leaves.create') }}" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            + Ajukan Cuti Baru
-                        </a>
-                    @endif
-                    
-                    @if(auth()->user()->role === 'ketua_divisi')
-                        <a href="{{ route('leader.leaves.index') }}" class="block w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
-                            Verifikasi Leader
-                        </a>
-                    @endif
+                {{-- === TAMPILAN KETUA DIVISI === --}}
+                @if(auth()->user()->role === 'ketua_divisi')
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Pengajuan Masuk</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['total_masuk'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-yellow-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Pending Verifikasi</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['pending_verifikasi'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-indigo-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Anggota Cuti Minggu Ini</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['sedang_cuti'] ?? 0 }}</div>
+                    </div>
+                    <a href="{{ route('leader.leaves.index') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white p-6 rounded-lg shadow flex items-center justify-center font-bold transition duration-150 ease-in-out">
+                        Verifikasi Pengajuan
+                    </a>
+                @endif
 
-                    @if(auth()->user()->role === 'hrd')
-                        <a href="{{ route('hrd.leaves.index') }}" class="block w-full text-center bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
-                            Verifikasi Final HRD
-                        </a>
-                    @endif
-                </div>
+                {{-- === TAMPILAN HRD === --}}
+                @if(auth()->user()->role === 'hrd')
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Pengajuan Bulan Ini</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['total_bulan_ini'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-red-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Pending Final Approval</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['pending_final'] ?? 0 }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-green-500">
+                        <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Sedang Cuti Bulan Ini</div>
+                        <div class="text-2xl font-bold dark:text-white">{{ $stats['sedang_cuti_bulan_ini'] ?? 0 }}</div>
+                    </div>
+                    <a href="{{ route('hrd.leaves.index') }}" class="bg-pink-600 hover:bg-pink-700 text-white p-6 rounded-lg shadow flex items-center justify-center font-bold transition duration-150 ease-in-out">
+                        Verifikasi HRD
+                    </a>
+                @endif
+
             </div>
 
-            <!-- TABEL RIWAYAT CUTI -->
+            <!-- TABEL RIWAYAT CUTI PRIBADI (User & Ketua Divisi) -->
+            @if(auth()->user()->role == 'user' || auth()->user()->role == 'ketua_divisi')
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Riwayat Pengajuan Cuti Anda</h3>
-                    
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Riwayat Pengajuan Cuti Pribadi</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -76,7 +110,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tanggal</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Jenis</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Durasi</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Alasan & Catatan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Alasan</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -85,77 +119,45 @@
                                 @forelse($riwayatCuti as $cuti)
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }} <br>
-                                        <span class="text-xs">s/d {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}</span>
+                                        {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                        {{ $cuti->jenis_cuti }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $cuti->total_hari }} Hari
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                        <p class="italic">"{{ $cuti->alasan }}"</p>
-                                        @if($cuti->catatan_penolakan)
-                                            <p class="text-red-500 text-xs mt-1 font-bold">Ditolak: {{ $cuti->catatan_penolakan }}</p>
-                                        @endif
-                                        @if($cuti->catatan_leader)
-                                            <p class="text-yellow-600 text-xs mt-1">Note Leader: {{ $cuti->catatan_leader }}</p>
-                                        @endif
-                                        @if($cuti->bukti_sakit)
-                                            <a href="{{ Storage::url($cuti->bukti_sakit) }}" target="_blank" class="text-blue-500 text-xs hover:underline">Lihat Surat</a>
-                                        @endif
-                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm capitalize dark:text-white">{{ $cuti->jenis_cuti }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-400">{{ $cuti->total_hari }} Hari</td>
+                                    <td class="px-6 py-4 text-sm max-w-xs truncate dark:text-gray-400">{{ $cuti->alasan }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($cuti->status == 'pending')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Pending</span>
-                                        @elseif($cuti->status == 'approved_leader')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">ACC Ketua Divisi</span>
-                                        @elseif($cuti->status == 'approved')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Disetujui HRD</span>
-                                        @elseif($cuti->status == 'rejected')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Ditolak</span>
-                                        @elseif($cuti->status == 'cancelled')
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-800 text-white">Dibatalkan</span>
-                                        @endif
+                                        <span class="px-2 text-xs font-semibold rounded-full 
+                                            {{ $cuti->status == 'approved' ? 'bg-green-100 text-green-800' : 
+                                              ($cuti->status == 'pending' ? 'bg-gray-100 text-gray-800' : 
+                                              ($cuti->status == 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) }}">
+                                            {{ ucfirst(str_replace('_', ' ', $cuti->status)) }}
+                                        </span>
                                     </td>
-                                    
-                                    <!-- INI BAGIAN PENTING: TOMBOL AKSI -->
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        
-                                        <!-- Tombol Batal (Hanya jika Pending) -->
                                         @if($cuti->status == 'pending')
                                             <form action="{{ route('leaves.cancel', $cuti->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini? Kuota akan dikembalikan.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-500 font-bold">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 font-bold">
                                                     Batalkan
                                                 </button>
                                             </form>
-                                        
-                                        <!-- Tombol Download PDF (Hanya jika Approved) -->
                                         @elseif($cuti->status == 'approved')
                                             <a href="{{ route('leaves.pdf', $cuti->id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold flex items-center">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                                 Unduh Surat
                                             </a>
-
-                                        @else
-                                            <span class="text-gray-400 text-xs">-</span>
-                                        @endif
-
+                                        @else - @endif
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada riwayat pengajuan cuti.</td>
-                                </tr>
+                                <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada riwayat pengajuan cuti.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+            @endif
+
         </div>
     </div>
 </x-app-layout>

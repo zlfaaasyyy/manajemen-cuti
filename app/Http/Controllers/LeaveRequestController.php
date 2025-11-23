@@ -23,13 +23,17 @@ class LeaveRequestController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi Input Dasar
+        // 1. Validasi Input Dasar (TERMASUK FIELD BARU)
         $request->validate([
             'jenis_cuti' => 'required',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alasan' => 'required',
             'bukti_sakit' => 'nullable|mimes:jpg,jpeg,png,pdf|max:2048',
+            
+            // Field Baru Sesuai Soal
+            'alamat_selama_cuti' => 'required|string|max:255',
+            'nomor_darurat' => 'required|string|max:20',
         ]);
 
         $user = Auth::user();
@@ -49,6 +53,12 @@ class LeaveRequestController extends Controller
         // --- ATURAN CUTI SAKIT ---
         // Maksimal diajukan 3 hari setelah sakit dimulai (Backdate limit)
         if ($request->jenis_cuti == 'sakit') {
+            // Cek Wajib Upload Surat Dokter
+            if (!$request->hasFile('bukti_sakit')) {
+                return back()->withErrors(['bukti_sakit' => 'Wajib upload surat dokter untuk cuti sakit.'])->withInput();
+            }
+
+            // Maksimal pengajuan H+3 dari tanggal mulai sakit
             $maxBackDate = $today->copy()->subDays(3);
             if ($startDate->lt($maxBackDate)) {
                 return back()->withErrors(['tanggal_mulai' => 'Cuti sakit maksimal diajukan 3 hari setelah tanggal mulai sakit.'])->withInput();
@@ -96,13 +106,10 @@ class LeaveRequestController extends Controller
         // --- UPLOAD BUKTI SAKIT ---
         $filePath = null;
         if ($request->jenis_cuti == 'sakit') {
-            if (!$request->hasFile('bukti_sakit')) {
-                return back()->withErrors(['bukti_sakit' => 'Wajib upload surat dokter.'])->withInput();
-            }
             $filePath = $request->file('bukti_sakit')->store('surat_dokter', 'public');
         }
 
-        // --- SIMPAN DATA ---
+        // --- SIMPAN DATA (FINAL) ---
         LeaveRequest::create([
             'user_id' => $user->id,
             'jenis_cuti' => $request->jenis_cuti,
@@ -112,9 +119,12 @@ class LeaveRequestController extends Controller
             'alasan' => $request->alasan,
             'bukti_sakit' => $filePath,
             'status' => 'pending',
+            // Field Baru
+            'alamat_selama_cuti' => $request->alamat_selama_cuti,
+            'nomor_darurat' => $request->nomor_darurat,
         ]);
 
-        // Potong kuota di awal (akan dikembalikan jika direject/cancel)
+        // Potong kuota di awal (hanya cuti tahunan)
         if ($request->jenis_cuti == 'tahunan') {
             $user->decrement('kuota_cuti', $totalHari);
         }
@@ -147,25 +157,20 @@ class LeaveRequestController extends Controller
     {
         $leader = Auth::user();
         
-        // STRICT CHECK: Admin tidak boleh akses
         if ($leader->role !== 'ketua_divisi') {
             abort(403, 'Halaman ini khusus Ketua Divisi.');
         }
 
-        // Cari ID divisi yang dipimpin oleh user ini
-        // Menggunakan relasi 'divisiKetua' yang ada di Model User
         $managedDivisi = $leader->divisiKetua; 
 
         if (!$managedDivisi) {
-            // Jika user rolenya ketua_divisi tapi belum diassign ke divisi mana pun
             return view('leaves.leader_index', ['pendingRequests' => collect([])]);
         }
 
-        // Ambil pengajuan HANYA dari anggota divisi tersebut
         $pendingRequests = LeaveRequest::where('status', 'pending')
             ->whereHas('user', function ($query) use ($managedDivisi, $leader) {
-                $query->where('divisi_id', $managedDivisi->id) // User harus satu divisi
-                      ->where('id', '!=', $leader->id);        // User bukan si ketua itu sendiri
+                $query->where('divisi_id', $managedDivisi->id) 
+                      ->where('id', '!=', $leader->id);        
             })
             ->with('user.divisi')
             ->get();
@@ -175,10 +180,8 @@ class LeaveRequestController extends Controller
 
     public function leaderAction(Request $request, LeaveRequest $leaveRequest)
     {
-        // STRICT CHECK: Hanya Ketua Divisi
         if (Auth::user()->role !== 'ketua_divisi') abort(403);
 
-        // STRICT CHECK: Pastikan yang diapprove adalah anggota divisinya sendiri
         if ($leaveRequest->user->divisi_id !== Auth::user()->divisiKetua->id) {
             abort(403, 'Anda tidak berhak memproses cuti dari divisi lain.');
         }
@@ -187,7 +190,6 @@ class LeaveRequestController extends Controller
         $catatan = $request->input('catatan');
 
         if ($action === 'approve') {
-            // ALUR 1: Pending -> Approved by Leader -> Lanjut ke HRD
             $leaveRequest->update([
                 'status' => 'approved_leader', 
                 'catatan_leader' => $catatan
@@ -216,18 +218,11 @@ class LeaveRequestController extends Controller
 
     public function hrdIndex()
     {
-        // STRICT CHECK: Hanya HRD
         if (Auth::user()->role !== 'hrd') abort(403);
 
-        // HRD Melihat:
-        // 1. Alur 1: Status 'approved_leader' (Dari Karyawan -> Leader -> HRD)
-        // 2. Alur 2: Status 'pending' TAPI dari User Role 'ketua_divisi' (Langsung ke HRD)
-        
         $pendingRequests = LeaveRequest::with(['user', 'user.divisi'])
             ->where(function($q) {
-                // Kondisi 1: Sudah di-ACC Leader
                 $q->where('status', 'approved_leader')
-                // Kondisi 2: Pending tapi dari Ketua Divisi
                   ->orWhere(function($subQ) {
                       $subQ->where('status', 'pending')
                            ->whereHas('user', function($userQ) {
@@ -249,7 +244,6 @@ class LeaveRequestController extends Controller
         $catatan = $request->input('catatan');
 
         if ($action === 'approve') {
-            // Final Approval
             $leaveRequest->update(['status' => 'approved']);
             $message = 'Pengajuan disetujui sepenuhnya (Final).';
         } elseif ($action === 'reject') {
@@ -275,8 +269,6 @@ class LeaveRequestController extends Controller
 
     public function report()
     {
-        // Admin Boleh Lihat Laporan, TAPI tidak boleh approve
-        // HRD Boleh Lihat Laporan
         if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hrd') {
             abort(403);
         }
@@ -296,7 +288,6 @@ class LeaveRequestController extends Controller
     {
         $user = Auth::user();
         
-        // Validasi Akses PDF: Pemilik, HRD, atau Ketua Divisi ybs
         $isOwner = $user->id === $leaveRequest->user_id;
         $isHRD = $user->role === 'hrd';
         $isLeader = $user->role === 'ketua_divisi' && $user->divisiKetua?->id === $leaveRequest->user->divisi_id;
