@@ -14,10 +14,8 @@
                 </div>
             @endif
 
-            <!-- STATISTIK DINAMIS BERDASARKAN ROLE -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-                {{-- === TAMPILAN ADMIN === --}}
                 @if(auth()->user()->role === 'admin')
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
                         <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Karyawan</div>
@@ -37,7 +35,6 @@
                     </div>
                 @endif
 
-                {{-- === TAMPILAN USER (KARYAWAN) === --}}
                 @if(auth()->user()->role === 'user')
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
                         <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Sisa Kuota Cuti</div>
@@ -52,13 +49,11 @@
                         <div class="text-sm font-bold mt-1 dark:text-white">{{ $stats['nama_divisi'] }}</div>
                         <div class="text-xs dark:text-gray-300">{{ $stats['nama_ketua'] }}</div>
                     </div>
-                    <!-- Tombol Shortcut -->
                     <a href="{{ route('leaves.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-lg shadow flex items-center justify-center font-bold transition duration-150 ease-in-out">
                         + Ajukan Cuti Baru
                     </a>
                 @endif
 
-                {{-- === TAMPILAN KETUA DIVISI === --}}
                 @if(auth()->user()->role === 'ketua_divisi')
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
                         <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Total Pengajuan Masuk</div>
@@ -77,7 +72,6 @@
                     </a>
                 @endif
 
-                {{-- === TAMPILAN HRD === --}}
                 @if(auth()->user()->role === 'hrd')
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4 border-blue-500">
                         <div class="text-gray-500 dark:text-gray-400 text-xs uppercase font-bold">Pengajuan Bulan Ini</div>
@@ -98,7 +92,6 @@
 
             </div>
 
-            <!-- TABEL RIWAYAT CUTI PRIBADI (User & Ketua Divisi) -->
             @if(auth()->user()->role == 'user' || auth()->user()->role == 'ketua_divisi')
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
