@@ -12,7 +12,6 @@ class DivisiController extends Controller
     // Tampilkan daftar semua divisi
     public function index()
     {
-        // Mengambil data divisi beserta ketua dan anggotanya
         $divisi = Divisi::with('ketuaDivisi', 'users')->get()->map(function ($div) {
             $div->jumlah_anggota = $div->users->count();
             return $div;
@@ -23,7 +22,6 @@ class DivisiController extends Controller
     // Tampilkan form tambah divisi
     public function create()
     {
-        // Ambil user role 'ketua_divisi' yang belum punya divisi
         $availableLeaders = User::where('role', 'ketua_divisi')
             ->whereDoesntHave('divisiKetua') 
             ->get();
@@ -35,12 +33,10 @@ class DivisiController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            // PERBAIKAN PENTING: Gunakan 'divisis' (jamak), bukan 'divisi'
             'nama' => 'required|string|max:255|unique:divisis,nama',
             'ketua_divisi_id' => [
                 'required', 
                 'exists:users,id',
-                // PERBAIKAN PENTING: Gunakan 'divisis'
                 Rule::unique('divisis', 'ketua_divisi_id')->where(function ($query) {
                     return $query->whereNotNull('ketua_divisi_id');
                 })
@@ -48,19 +44,25 @@ class DivisiController extends Controller
             'deskripsi' => 'nullable|string',
         ]);
 
-        Divisi::create([
+        // 1. Buat Divisi Baru
+        $divisi = Divisi::create([
             'nama' => $request->nama,
             'ketua_divisi_id' => $request->ketua_divisi_id,
             'deskripsi' => $request->deskripsi,
         ]);
 
-        return redirect()->route('divisi.index')->with('success', 'Divisi baru berhasil ditambahkan!');
+        // 2. LOGIKA BARU: Update User si Ketua agar divisi_id-nya masuk ke divisi ini
+        $ketua = User::find($request->ketua_divisi_id);
+        if ($ketua) {
+            $ketua->update(['divisi_id' => $divisi->id]);
+        }
+
+        return redirect()->route('divisi.index')->with('success', 'Divisi baru berhasil ditambahkan dan Ketua otomatis dimasukkan ke divisi.');
     }
 
     // Tampilkan form edit divisi
     public function edit(Divisi $divisi)
     {
-        // Ambil user role 'ketua_divisi' yang belum punya divisi ATAU dia adalah ketua divisi ini
         $currentLeaderId = $divisi->ketua_divisi_id;
         
         $availableLeaders = User::where('role', 'ketua_divisi')
@@ -77,19 +79,23 @@ class DivisiController extends Controller
     public function update(Request $request, Divisi $divisi)
     {
         $request->validate([
-            // PERBAIKAN PENTING: Ubah 'divisi' menjadi 'divisis' di sini!
             'nama' => ['required', 'string', 'max:255', Rule::unique('divisis', 'nama')->ignore($divisi->id)], 
-            
             'ketua_divisi_id' => [
                 'required', 
                 'exists:users,id',
-                // PERBAIKAN PENTING: Ubah 'divisi' menjadi 'divisis' di sini juga!
                 Rule::unique('divisis', 'ketua_divisi_id')->ignore($divisi->id)
             ],
             'deskripsi' => 'nullable|string',
         ]);
 
+        // 1. Update Data Divisi
         $divisi->update($request->only(['nama', 'ketua_divisi_id', 'deskripsi']));
+
+        // 2. LOGIKA BARU: Update User si Ketua agar divisi_id-nya masuk ke divisi ini
+        $ketua = User::find($request->ketua_divisi_id);
+        if ($ketua) {
+            $ketua->update(['divisi_id' => $divisi->id]);
+        }
 
         return redirect()->route('divisi.index')->with('success', 'Data divisi berhasil diperbarui!');
     }
@@ -97,7 +103,6 @@ class DivisiController extends Controller
     // Proses hapus divisi
     public function destroy(Divisi $divisi)
     {
-        // Lepaskan user dari divisi sebelum dihapus
         User::where('divisi_id', $divisi->id)->update(['divisi_id' => null]);
         
         $divisi->delete();

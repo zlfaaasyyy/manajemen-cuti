@@ -52,7 +52,7 @@
                     
                     @if(auth()->user()->role === 'ketua_divisi')
                         <a href="{{ route('leader.leaves.index') }}" class="block w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
-                            Verifikasi Bawahan
+                            Verifikasi Leader
                         </a>
                     @endif
 
@@ -97,7 +97,10 @@
                                     <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
                                         <p class="italic">"{{ $cuti->alasan }}"</p>
                                         @if($cuti->catatan_penolakan)
-                                            <p class="text-red-500 text-xs mt-1">Note: {{ $cuti->catatan_penolakan }}</p>
+                                            <p class="text-red-500 text-xs mt-1 font-bold">Ditolak: {{ $cuti->catatan_penolakan }}</p>
+                                        @endif
+                                        @if($cuti->catatan_leader)
+                                            <p class="text-yellow-600 text-xs mt-1">Note Leader: {{ $cuti->catatan_leader }}</p>
                                         @endif
                                         @if($cuti->bukti_sakit)
                                             <a href="{{ Storage::url($cuti->bukti_sakit) }}" target="_blank" class="text-blue-500 text-xs hover:underline">Lihat Surat</a>
@@ -116,8 +119,11 @@
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-800 text-white">Dibatalkan</span>
                                         @endif
                                     </td>
+                                    
+                                    <!-- INI BAGIAN PENTING: TOMBOL AKSI -->
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <!-- Tombol Batal hanya jika status PENDING -->
+                                        
+                                        <!-- Tombol Batal (Hanya jika Pending) -->
                                         @if($cuti->status == 'pending')
                                             <form action="{{ route('leaves.cancel', $cuti->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini? Kuota akan dikembalikan.');">
                                                 @csrf
@@ -126,9 +132,18 @@
                                                     Batalkan
                                                 </button>
                                             </form>
+                                        
+                                        <!-- Tombol Download PDF (Hanya jika Approved) -->
+                                        @elseif($cuti->status == 'approved')
+                                            <a href="{{ route('leaves.pdf', $cuti->id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-bold flex items-center">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                Unduh Surat
+                                            </a>
+
                                         @else
                                             <span class="text-gray-400 text-xs">-</span>
                                         @endif
+
                                     </td>
                                 </tr>
                                 @empty
