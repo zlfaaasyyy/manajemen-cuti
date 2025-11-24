@@ -116,32 +116,59 @@
 
 
             <!-- ============================================= -->
-            <!-- 3. DASHBOARD KETUA DIVISI -->
+            <!-- 3. DASHBOARD KETUA DIVISI (Tampilan Baru) -->
             <!-- ============================================= -->
             @if(auth()->user()->role === 'ketua_divisi')
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Total Masuk -->
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #473C33;">
-                    <p class="text-gray-500 text-sm">Total Pengajuan Masuk</p>
-                    <h3 class="text-3xl font-extrabold text-stone-800 mt-1">{{ $stats['total_masuk'] ?? 0 }}</h3>
-                </div>
-                <!-- Pending Verifikasi (KUNING MUDA) -->
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100 flex justify-between items-center" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #FEC868;">
+            <!-- Info Divisi & Ketua (Warna Cokelat Gelap - Mirip Dashboard User) -->
+            <div class="rounded-[24px] shadow-xl p-6 text-white mb-6" style="background-color: #473C33;">
+                <h3 class="text-xl font-extrabold">Selamat Datang, {{ auth()->user()->name }}!</h3>
+                <p class="text-gray-300 text-sm mb-4">Anda adalah Ketua Divisi <strong>{{ auth()->user()->divisiKetua->nama ?? 'N/A' }}</strong></p>
+                <div class="flex items-center space-x-8">
                     <div>
-                        <p class="text-gray-500 text-sm">Pending Verifikasi Anda</p>
-                        <h3 class="text-3xl font-extrabold" style="color: #FEC868;">{{ $stats['pending_verifikasi'] ?? 0 }}</h3>
+                        <p class="text-xs uppercase opacity-75">Total Anggota</p>
+                        <p class="font-bold text-xl" style="color: #FEC868;">{{ isset($extraData['anggota_divisi']) ? count($extraData['anggota_divisi']) : 0 }}</p>
                     </div>
-                    @if(($stats['pending_verifikasi'] ?? 0) > 0)
-                        <a href="{{ route('leader.leaves.index') }}" class="text-sm bg-amber-100 text-amber-700 px-4 py-2 rounded-xl hover:bg-amber-200 font-bold transition">Proses Sekarang &rarr;</a>
-                    @endif
+                    <div>
+                        <p class="text-xs uppercase opacity-75">Sisa Kuota Pribadi</p>
+                        <p class="font-bold text-xl">{{ auth()->user()->kuota_cuti ?? 0 }} Hari</p>
+                    </div>
+                </div>
+                <!-- TOMBOL AJUKAN CUTI PRIBADI (PENTING DITAMBAHKAN DI SINI) -->
+                <div class="mt-4">
+                    <a href="{{ route('leaves.create') }}" class="inline-flex items-center px-6 py-2.5 font-bold text-white rounded-xl shadow-lg transition" style="background-color: #FDA769; box-shadow: 0 4px 8px -2px rgba(253, 167, 105, 0.5); border: none; font-size: 14px;">
+                        + Ajukan Cuti Pribadi
+                    </a>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <!-- STATISTIK UTAMA (Mirip layout card 3 kolom User) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- PENDING VERIFIKASI (ORANGE TERAKOTA - FDA769) -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #FDA769;">
+                    <p class="text-gray-500 text-sm">Pending Verifikasi Anda</p>
+                    <h3 class="text-4xl font-extrabold mt-1" style="color: #FDA769;">{{ $stats['pending_verifikasi'] ?? 0 }} <span class="text-base font-medium text-gray-400">Pengajuan</span></h3>
+                    @if(($stats['pending_verifikasi'] ?? 0) > 0)
+                        <a href="{{ route('leader.leaves.index') }}" class="text-xs text-orange-600 hover:underline font-bold mt-2 inline-block">Proses Sekarang &rarr;</a>
+                    @endif
+                </div>
+                <!-- TOTAL PENGAJUAN MASUK (HIJAU LUMUT - ABC270) -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #ABC270;">
+                    <p class="text-gray-500 text-sm">Total Pengajuan Divisi</p>
+                    <h3 class="text-4xl font-extrabold mt-1" style="color: #ABC270;">{{ $stats['total_masuk'] ?? 0 }} <span class="text-base font-medium text-gray-400">Total</span></h3>
+                </div>
+                 <!-- SEDANG CUTI MINGGU INI (COKELAT GELAP - 473C33) -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #473C33;">
+                    <p class="text-gray-500 text-sm">Anggota Cuti Minggu Ini</p>
+                    <h3 class="text-4xl font-extrabold text-stone-800 mt-1">{{ isset($extraData['sedang_cuti_minggu_ini']) ? count($extraData['sedang_cuti_minggu_ini']) : 0 }} <span class="text-base font-medium text-gray-400">Orang</span></h3>
+                </div>
+            </div>
+
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
                 <!-- Tabel Anggota Divisi -->
                 <div class="bg-white p-8 rounded-[30px] shadow-2xl border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                     <h3 class="font-extrabold text-xl mb-3 text-stone-800">Daftar Anggota Divisi</h3>
-                    <ul class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    <ul class="divide-y divide-gray-200 max-h-72 overflow-y-auto">
                         @if(isset($extraData['anggota_divisi']))
                             @forelse($extraData['anggota_divisi'] as $anggota)
                                 <li class="py-3 flex items-center justify-between">
@@ -157,7 +184,7 @@
                                     <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full border">Sisa: {{ $anggota->kuota_cuti }} Hari</span>
                                 </li>
                             @empty
-                                <li class="py-3 text-sm text-gray-500 italic">Belum ada anggota.</li>
+                                <li class="py-3 text-sm text-gray-500 italic">Belum ada anggota di divisi.</li>
                             @endforelse
                         @endif
                     </ul>
@@ -166,17 +193,24 @@
                 <!-- Tabel Sedang Cuti Minggu Ini -->
                 <div class="bg-white p-8 rounded-[30px] shadow-2xl border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                     <h3 class="font-extrabold text-xl mb-3" style="color: #FDA769;">
-                        <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Sedang Cuti Minggu Ini
                     </h3>
-                    <ul class="space-y-3 max-h-64 overflow-y-auto">
+                    <ul class="space-y-3 max-h-72 overflow-y-auto">
                         @if(isset($extraData['sedang_cuti_minggu_ini']))
                             @forelse($extraData['sedang_cuti_minggu_ini'] as $userCuti)
                                 <li class="bg-orange-50 p-3 rounded-xl flex justify-between items-center border border-orange-200">
-                                    <span class="font-bold text-sm text-stone-800">{{ $userCuti->name }}</span>
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Initial Anggota (Orange Terakota) -->
+                                        <div class="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs" style="background-color: #FDA769;">
+                                            {{ substr($userCuti->name, 0, 1) }}
+                                        </div>
+                                        <span class="font-bold text-sm text-stone-800">{{ $userCuti->name }}</span>
+                                    </div>
                                     <span class="text-xs text-orange-600 font-mono">
                                         @if($userCuti->leaveRequests->isNotEmpty())
-                                        s/d {{ \Carbon\Carbon::parse($userCuti->leaveRequests->first()->tanggal_selesai)->format('d M') }}
+                                            s/d {{ \Carbon\Carbon::parse($userCuti->leaveRequests->first()->tanggal_selesai)->format('d M') }}
+                                        @else
+                                            N/A
                                         @endif
                                     </span>
                                 </li>

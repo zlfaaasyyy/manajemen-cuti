@@ -221,12 +221,13 @@ class LeaveRequestController extends Controller
             return back()->with('error', 'Hanya cuti yang disetujui yang dapat diunduh.');
         }
 
-        // PERBAIKAN NAMA VARIABEL UNTUK VIEW PDF
+        // PASTIKAN MENGGUNAKAN 'leaves.pdf' SESUAI TEMPLATE MODERN
         $leave = $leaveRequest; 
         
         // Nama HRD Manager diambil dari user HRD pertama yang ditemukan
         $hrdManager = \App\Models\User::where('role', 'hrd')->first();
         
+        // PENTING: PANGGIL FILE resources/views/leaves/pdf.blade.php
         $pdf = Pdf::loadView('leaves.pdf', compact('leave', 'hrdManager'));
         return $pdf->download('Surat_Izin_Cuti_' . $leaveRequest->user->name . '.pdf');
     }
@@ -287,22 +288,11 @@ class LeaveRequestController extends Controller
     {
         if (Auth::user()->role !== 'hrd') abort(403);
 
-        // HRD melihat:
-        // 1. Status 'approved_leader' (Dari karyawan biasa via ketua)
-        // 2. Status 'approved_leader' dari Ketua Divisi (karena logic store membuat statusnya langsung 'approved_leader')
-        //    ATAU PENDING dari Ketua Divisi (jika logic store-nya nanti diubah, tapi untuk saat ini, statusnya langsung approved_leader)
-        
-        // PERBAIKAN: Hanya perlu mencari status 'approved_leader' saja.
-        // Jika Ketua Divisi mengajukan, statusnya langsung disetel ke 'approved_leader' di method store.
-        
+        // HRD melihat semua pengajuan yang sudah disetujui Leader (status: approved_leader)
         $pendingRequests = LeaveRequest::with(['user', 'user.divisi'])
             ->where('status', 'approved_leader')
             ->orderBy('created_at', 'asc')
             ->get();
-
-        // Keterangan: Jika Ketua Divisi mengajukan, statusnya langsung approved_leader.
-        // Jika Karyawan biasa mengajukan dan sudah di-approve Leader, statusnya juga approved_leader.
-        // Jadi, semua yang butuh aksi final HRD statusnya adalah 'approved_leader'.
 
         return view('leaves.hrd_index', compact('pendingRequests'));
     }
@@ -341,56 +331,7 @@ class LeaveRequestController extends Controller
         return redirect()->route('hrd.leaves.index')->with('success', $msg ?? 'Diproses.');
     }
 
-    public function hrdBulkAction(Request $request)
-    {
-        if (Auth::user()->role !== 'hrd') abort(403);
-
-        $request->validate([
-            'ids' => 'required|string', 
-            'bulk_action' => 'required|in:approve,reject',
-            'bulk_catatan' => 'nullable|string'
-        ]);
-
-        $ids = explode(',', $request->ids);
-        $action = $request->bulk_action;
-        $catatan = $request->bulk_catatan;
-
-        if ($action === 'reject' && strlen($catatan) < 10) {
-            return back()->with('error', 'Catatan reject massal minimal 10 karakter.');
-        }
-
-        DB::beginTransaction();
-        try {
-            $requests = LeaveRequest::whereIn('id', $ids)->get();
-            $count = 0;
-
-            foreach ($requests as $req) {
-                if ($action === 'approve') {
-                    $req->update([
-                        'status' => 'approved',
-                        'approved_hrd_at' => now(),
-                        'catatan_hrd' => 'Bulk Approve HRD',
-                    ]);
-                } else {
-                    // Hanya refund jika tahunan dan belum rejected sebelumnya
-                    if ($req->jenis_cuti == 'tahunan' && $req->status !== 'rejected') {
-                        $req->user->increment('kuota_cuti', $req->total_hari);
-                    }
-                    $req->update([
-                        'status' => 'rejected',
-                        'approved_hrd_at' => now(),
-                        'catatan_penolakan' => 'Bulk Reject HRD: ' . $catatan
-                    ]);
-                }
-                $count++;
-            }
-            DB::commit();
-            return redirect()->route('hrd.leaves.index')->with('success', "$count pengajuan berhasil diproses massal.");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan sistem.');
-        }
-    }
+    // FUNGSI hrdBulkAction TELAH DIHAPUS
 
     public function report()
     {

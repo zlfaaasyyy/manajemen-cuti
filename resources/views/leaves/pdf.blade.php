@@ -3,84 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <title>Surat Izin Cuti - {{ $leave->user->name }}</title>
-    <!-- Gunakan CSS Inline atau internal karena package PDF tidak bisa membaca file eksternal -->
+    <!-- CSS dioptimalkan untuk PDF agar tidak terpotong -->
     <style>
         body { 
             font-family: 'Arial', sans-serif; 
-            line-height: 1.6;
-            margin: 0;
+            line-height: 1.5;
+            margin: 0.5cm; 
             padding: 0;
         }
         .container {
-            width: 80%;
-            margin: 40px auto;
-            border: 1px solid #ccc;
-            padding: 30px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            padding: 0; /* Container tidak perlu padding lagi, cukup body margin */
         }
         .header {
             text-align: center;
             border-bottom: 2px solid #333;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
         .header h1 {
             margin: 0;
-            font-size: 24px;
-            color: #473C33; /* Warna gelap tema Anda */
+            font-size: 20px; 
+            color: #473C33;
         }
         .header p {
-            margin: 5px 0 0 0;
-            font-size: 14px;
+            margin: 3px 0 0 0;
+            font-size: 11px;
         }
         .content {
-            font-size: 12pt;
+            font-size: 11pt;
         }
         .details {
-            margin: 20px 0;
+            margin: 15px 0;
             border-collapse: collapse;
             width: 100%;
         }
         .details th, .details td {
-            padding: 8px 0;
+            padding: 5px 0;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
         .details th {
-            width: 35%;
+            width: 35%; /* Kolom Th dibuat sedikit lebih kecil */
             font-weight: bold;
             color: #333;
-        }
-        .signature {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .signature-box {
-            width: 45%;
-            text-align: center;
-            float: left;
-        }
-        .signature-hrd {
-            float: right;
-            text-align: center;
-        }
-        .ttd-space {
-            height: 60px;
-            border-bottom: 1px dashed #aaa;
-            margin-bottom: 5px;
         }
         .date {
             text-align: right;
             margin-bottom: 20px;
-            font-size: 12pt;
+            font-size: 11pt;
         }
+        
+        /* Style untuk Catatan HRD */
         .info-box {
             border: 1px solid #ABC270;
             background-color: #f7fff0;
-            padding: 15px;
-            margin-top: 30px;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 10pt;
+            border-radius: 5px;
         }
+
+        /* Layout Tanda Tangan */
+        .signature-area {
+            margin-top: 50px;
+            width: 100%;
+            clear: both;
+            overflow: hidden; 
+        }
+        .signature-box {
+            width: 45%; 
+            text-align: center;
+            padding-top: 10px;
+        }
+        .signature-leader {
+            float: left;
+        }
+        .signature-hrd {
+            float: right;
+        }
+        .ttd-space {
+            height: 50px; /* Ruang TTD */
+            border-bottom: 1px dashed #aaa;
+            margin-bottom: 5px;
+        }
+        .clear { clear: both; }
+
     </style>
 </head>
 <body>
@@ -92,7 +100,7 @@
         </div>
 
         <div class="date">
-            Sulawesi, {{ now()->format('d F Y') }}
+            Jakarta, {{ now()->format('d F Y') }}
         </div>
 
         <div class="content">
@@ -105,6 +113,10 @@
                     <td>: {{ $leave->user->name }}</td>
                 </tr>
                 <tr>
+                    <th>Nomor Induk Pegawai (NIP)</th>
+                    <td>: {{ $leave->user->nip ?? '-' }}</td>
+                </tr>
+                <tr>
                     <th>Divisi</th>
                     <td>: {{ $leave->user->divisi->nama ?? 'N/A' }}</td>
                 </tr>
@@ -114,7 +126,7 @@
                 </tr>
             </table>
 
-            <p style="margin-top: 20px;">Diberikan izin untuk mengambil cuti terhitung mulai:</p>
+            <p style="margin-top: 15px;">Diberikan izin untuk mengambil cuti terhitung mulai:</p>
             
             <table class="details">
                 <tr>
@@ -131,34 +143,37 @@
                 </tr>
             </table>
 
-            <p style="margin-top: 20px;">
+            <p style="margin-top: 15px;">
                 Cuti ini diajukan dengan alasan: <strong>{{ $leave->alasan }}</strong>. Karyawan yang bersangkutan dapat dihubungi melalui nomor darurat <strong>{{ $leave->nomor_darurat }}</strong> atau di alamat <strong>{{ $leave->alamat_selama_cuti }}</strong> selama periode cuti.
             </p>
             
+            <!-- Menggunakan Info Box yang lebih ringkas -->
             <div class="info-box">
-                <p style="margin: 0; font-size: 10pt; color: #ABC270; font-weight: bold;">Catatan HRD:</p>
-                <p style="margin: 5px 0 0 0; font-size: 11pt;">{{ $leave->catatan_hrd ?? 'Disetujui tanpa catatan khusus.' }}</p>
+                <p style="margin: 0; font-weight: bold; color: #ABC270;">Catatan HRD:</p>
+                <p style="margin: 3px 0 0 0;">{{ $leave->catatan_hrd ?? 'Disetujui tanpa catatan khusus.' }}</p>
             </div>
 
-            <p style="margin-top: 30px;">
+            <p style="margin-top: 20px;">
                 Demikian surat izin cuti ini dibuat untuk digunakan sebagaimana mestinya. Atas perhatian dan kerjasamanya, kami ucapkan terima kasih.
             </p>
         </div>
 
-        <div class="signature">
-            <div class="signature-box">
+        <!-- TANDA TANGAN -->
+        <div class="signature-area">
+            <div class="signature-box signature-leader">
                 Disetujui Oleh,<br>
                 Ketua Divisi {{ $leave->user->divisi->nama ?? 'N/A' }}
                 <div class="ttd-space"></div>
-                <span style="font-weight: bold;">({{ $leave->user->divisi->ketuaDivisi->name ?? 'N/A' }})</span>
+                <span style="font-weight: bold; font-size: 11pt;">({{ $leave->user->divisi->ketuaDivisi->name ?? 'N/A' }})</span>
             </div>
 
-            <div class="signature-box">
+            <div class="signature-box signature-hrd">
                 Dikeluarkan Oleh,<br>
                 HRD Manager
                 <div class="ttd-space"></div>
-                <span style="font-weight: bold;">({{ $hrdManager->name ?? 'HRD Manager' }})</span>
+                <span style="font-weight: bold; font-size: 11pt;">({{ $hrdManager->name ?? 'HRD Manager' }})</span>
             </div>
+            <div class="clear"></div>
         </div>
         
     </div>

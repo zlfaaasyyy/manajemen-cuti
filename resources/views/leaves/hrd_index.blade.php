@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <!-- CONTAINER UTAMA: Menginisialisasi state Alpine.js -->
-    <div class="py-12" x-data="{ selectedIds: [], selectAll: false }" style="background-color: #F8F8F8;">
+    <!-- CONTAINER UTAMA: Hapus Alpine Data untuk Bulk Action -->
+    <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
             
             <!-- Notifikasi Sukses/Error -->
@@ -23,41 +23,11 @@
                 </div>
             @endif
 
-            <!-- TOOLBAR BULK ACTION (FIXED BOTTOM) -->
-            <div x-show="selectedIds.length > 0" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-full"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 translate-y-full"
-                 class="fixed bottom-0 left-0 right-0 shadow-[0_-8px_15px_-3px_rgba(0,0,0,0.1)] border-t p-4 z-50 flex justify-between items-center px-4 md:px-24 rounded-t-[30px]" 
-                 style="background-color: #473C33; border-top-color: #ABC270;">
-                
-                <div class="text-white font-extrabold text-lg flex items-center">
-                    <span class="bg-white text-stone-800 text-xs px-2 py-1 rounded-full mr-2" x-text="selectedIds.length"></span>
-                    Pengajuan Dipilih
-                </div>
-                
-                <div class="space-x-3 flex">
-                    <!-- Tombol Bulk Reject -->
-                    <button x-on:click="$dispatch('open-modal', 'bulk-reject-modal')" 
-                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 md:px-6 rounded-xl shadow flex items-center transition" style="border-radius: 12px;">
-                        <svg class="w-5 h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        <span class="hidden md:inline">Tolak Massal</span>
-                    </button>
-                    
-                    <!-- Tombol Bulk Approve (HIJAU LUMUT #ABC270) -->
-                    <button x-on:click="$dispatch('open-modal', 'bulk-approve-modal')" 
-                            class="text-white font-bold py-2 px-4 md:px-6 rounded-xl shadow flex items-center transition" style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7); border-radius: 12px;">
-                        <svg class="w-5 h-5 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span class="hidden md:inline">Approve Massal</span>
-                    </button>
-                </div>
-            </div>
+            <!-- Hapus TOOLBAR BULK ACTION (Fixed Bottom) -->
+            <!-- Hapus checkox Select All -->
 
-            <!-- HEADER LIST & CHECKBOX SELECT ALL -->
-            <div class="flex flex-col md:flex-row justify-between items-end mb-6 space-y-4 md:space-y-0">
+            <!-- HEADER LIST (Dibuat lebih sederhana) -->
+            <div class="flex justify-between items-end mb-6">
                 <div>
                     <h3 class="text-xl font-extrabold text-stone-800">
                         Menunggu Persetujuan Final: 
@@ -67,32 +37,15 @@
                     </h3>
                     <p class="text-sm text-gray-500 mt-2">Silakan review pengajuan di bawah ini sebelum memberikan keputusan final.</p>
                 </div>
-                
-                <!-- Tombol Select All -->
-                @if($pendingRequests->count() > 0)
-                <div>
-                    <label class="inline-flex items-center space-x-2 cursor-pointer bg-white px-4 py-2 rounded-xl shadow border hover:bg-gray-50 transition select-none" style="border-radius: 12px;">
-                        <input type="checkbox" class="rounded border-gray-300 text-stone-800 shadow-sm focus:ring-amber-500 w-5 h-5"
-                            x-model="selectAll"
-                            @change="selectedIds = selectAll ? [{{ $pendingRequests->pluck('id')->implode(',') }}] : []">
-                        <span class="text-sm font-bold text-stone-800">Pilih Semua</span>
-                    </label>
-                </div>
-                @endif
             </div>
 
             <!-- GRID KARTU PENGAJUAN -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-24">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @forelse($pendingRequests as $request)
                 <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] border border-gray-100 flex flex-col transition hover:shadow-3xl duration-300"
-                     :class="{ 'ring-2 ring-amber-400 bg-amber-50 scale-[1.01]': selectedIds.includes({{ $request->id }}) }"
                      style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-radius: 24px;">
                     
-                    <!-- CHECKBOX INDIVIDU (Pojok Kiri Atas) -->
-                    <div class="absolute top-3 left-3 z-10">
-                        <input type="checkbox" value="{{ $request->id }}" x-model="selectedIds"
-                            class="w-6 h-6 rounded border-gray-300 text-amber-500 shadow-sm focus:ring-amber-500 cursor-pointer bg-white/90 backdrop-blur">
-                    </div>
+                    <!-- Hapus CHECKBOX INDIVIDU -->
 
                     <!-- Label Asal Pengajuan (Pojok Kanan Atas) -->
                     <div class="absolute top-3 right-3">
@@ -159,7 +112,7 @@
                                 Disetujui oleh: <span class="font-semibold">{{ $request->user->divisi->ketuaDivisi->name ?? 'N/A' }}</span>
                             </p>
                             <p class="text-gray-500">
-                                Catatan: "{{ $request->catatan_leader ?? 'Tidak ada catatan.' }}"
+                                Catatan: "<strong>{{ $request->catatan_leader ?? 'Tidak ada catatan.' }}</strong>"
                             </p>
                         </div>
                         @endif
@@ -238,57 +191,8 @@
                     </form>
                 </x-modal>
                 
-                <!-- ================= MODAL BULK APPROVE ================= -->
-                <x-modal name="bulk-approve-modal" focusable>
-                    <form method="POST" action="{{ route('hrd.leaves.bulk_action') }}" class="p-6">
-                        @csrf
-                        <input type="hidden" name="bulk_action" value="approve">
-                        <input type="hidden" name="ids" :value="selectedIds.join(',')">
-                        
-                        <h2 class="text-xl font-bold text-stone-800 flex items-center">
-                            <span class="p-2 rounded-full mr-3" style="background-color: #ABC270; color: white;">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            Approve Massal (<span x-text="selectedIds.length"></span> Pengajuan)
-                        </h2>
-                        <p class="mt-3 text-sm text-gray-600">
-                            Anda akan menyetujui secara final semua pengajuan yang dipilih. Tindakan ini memotong kuota cuti tahunan dan membuat surat izin siap diunduh.
-                        </p>
-
-                        <div class="mt-6 flex justify-end">
-                            <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl">Batal</button>
-                            <button type="submit" class="ms-3 px-4 py-2 text-sm font-bold text-white rounded-xl transition" style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7);">Lakukan Approve Massal</button>
-                        </div>
-                    </form>
-                </x-modal>
-
-                <!-- ================= MODAL BULK REJECT ================= -->
-                <x-modal name="bulk-reject-modal" focusable>
-                    <form method="POST" action="{{ route('hrd.leaves.bulk_action') }}" class="p-6">
-                        @csrf
-                        <input type="hidden" name="bulk_action" value="reject">
-                        <input type="hidden" name="ids" :value="selectedIds.join(',')">
-                        
-                        <h2 class="text-xl font-bold text-red-600 flex items-center">
-                            <span class="bg-red-100 text-red-600 p-2 rounded-full mr-3">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </span>
-                            Tolak Massal (<span x-text="selectedIds.length"></span> Pengajuan)
-                        </h2>
-                        <div class="mt-4">
-                            <label class="block text-sm font-bold text-gray-700">
-                                Alasan Penolakan Massal <span class="text-red-500">*</span> (Min. 10 Karakter)
-                            </label>
-                            <textarea name="bulk_catatan" class="w-full border-gray-300 rounded-xl shadow-sm mt-1 focus:ring-red-500 focus:border-red-500" 
-                                      rows="3" required minlength="10" placeholder="Wajib diisi: Contoh: Kuota Cuti Bersama Habis." style="border-radius: 12px;"></textarea>
-                        </div>
-
-                        <div class="mt-6 flex justify-end">
-                            <button type="button" x-on:click="$dispatch('close')" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl">Batal</button>
-                            <x-danger-button class="ms-3">Lakukan Tolak Massal</x-danger-button>
-                        </div>
-                    </form>
-                </x-modal>
+                <!-- HAPUS MODAL BULK APPROVE -->
+                <!-- HAPUS MODAL BULK REJECT -->
 
                 @empty
                 <div class="col-span-full flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-300 rounded-xl" style="background-color: #FFFFFF; box-shadow: 0 10px 20px rgba(0,0,0,0.03);">

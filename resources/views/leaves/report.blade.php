@@ -11,15 +11,7 @@
             <!-- Filter & Download Section -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[24px] p-6 mb-8 border border-gray-100 flex justify-between items-center" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
                 <h3 class="font-extrabold text-lg text-stone-800">Data Riwayat Pengajuan Cuti (Total: {{ $leaves->count() }})</h3>
-                
-                <!-- Tombol Download Laporan Global (Orange Terakota #FDA769) -->
-                <button 
-                    class="px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition flex items-center hover:opacity-90 disabled:opacity-50" 
-                    style="background-color: #FDA769; box-shadow: 0 4px 8px -2px rgba(253, 167, 105, 0.5); border: none; font-size: 15px;"
-                    disabled>
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Download Laporan Global (Coming Soon)
-                </button>
+               
             </div>
 
 
