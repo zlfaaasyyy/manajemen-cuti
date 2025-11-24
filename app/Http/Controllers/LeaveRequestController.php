@@ -9,12 +9,39 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class LeaveRequestController extends Controller
 {
-    // ==========================================
-    // 1. FITUR PENGAJUAN (USER & KETUA DIVISI)
-    // ==========================================
+    public function index(Request $request)
+    {
+        $query = LeaveRequest::where('user_id', Auth::id());
+        
+        // Filter Jenis
+        if ($request->filled('jenis_cuti')) {
+            $query->where('jenis_cuti', $request->jenis_cuti);
+        }
+
+        // Filter Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter Bulan & Tahun
+        if ($request->filled('bulan') && $request->filled('tahun')) {
+            $query->whereMonth('tanggal_mulai', $request->bulan)
+                  ->whereYear('tanggal_mulai', $request->tahun);
+        }
+
+        // Filter Tanggal Pengajuan
+        if ($request->filled('tgl_pengajuan')) {
+            $query->whereDate('created_at', $request->tgl_pengajuan);
+        }
+
+        $leaves = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        return view('leaves.index', compact('leaves'));
+    }
 
     public function create()
     {
@@ -23,15 +50,13 @@ class LeaveRequestController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi Input Dasar (TERMASUK FIELD BARU)
+        // 1. Validasi Input Dasar
         $request->validate([
             'jenis_cuti' => 'required',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alasan' => 'required',
-            'bukti_sakit' => 'nullable|mimes:jpg,jpeg,png,pdf|max:2048',
-            
-            // Field Baru Sesuai Soal
+            'bukti_sakit' => 'nullable|mimes:jpg,jpeg,png,pdf|max:2048', // Max 2MB
             'alamat_selama_cuti' => 'required|string|max:255',
             'nomor_darurat' => 'required|string|max:20',
         ]);
@@ -39,77 +64,67 @@ class LeaveRequestController extends Controller
         $user = Auth::user();
         $startDate = Carbon::parse($request->tanggal_mulai);
         $endDate = Carbon::parse($request->tanggal_selesai);
-        $today = Carbon::today();
-
-        // --- ATURAN CUTI TAHUNAN ---
-        // Pengajuan minimal H-3
-        if ($request->jenis_cuti == 'tahunan') {
-            $minDate = $today->copy()->addDays(3);
-            if ($startDate->lt($minDate)) {
-                return back()->withErrors(['tanggal_mulai' => 'Cuti tahunan wajib diajukan minimal H-3 (Paling cepat: ' . $minDate->format('d-m-Y') . ').'])->withInput();
-            }
-        }
-
-        // --- ATURAN CUTI SAKIT ---
-        // Maksimal diajukan 3 hari setelah sakit dimulai (Backdate limit)
-        if ($request->jenis_cuti == 'sakit') {
-            // Cek Wajib Upload Surat Dokter
-            if (!$request->hasFile('bukti_sakit')) {
-                return back()->withErrors(['bukti_sakit' => 'Wajib upload surat dokter untuk cuti sakit.'])->withInput();
-            }
-
-            // Maksimal pengajuan H+3 dari tanggal mulai sakit
-            $maxBackDate = $today->copy()->subDays(3);
-            if ($startDate->lt($maxBackDate)) {
-                return back()->withErrors(['tanggal_mulai' => 'Cuti sakit maksimal diajukan 3 hari setelah tanggal mulai sakit.'])->withInput();
-            }
-        }
-
-        // --- VALIDASI OVERLAP ---
-        $overlap = LeaveRequest::where('user_id', $user->id)
-            ->whereIn('status', ['pending', 'approved_leader', 'approved'])
-            ->where(function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('tanggal_mulai', [$startDate, $endDate])
-                      ->orWhereBetween('tanggal_selesai', [$startDate, $endDate])
-                      ->orWhere(function ($q) use ($startDate, $endDate) {
-                          $q->where('tanggal_mulai', '<=', $startDate)
-                            ->where('tanggal_selesai', '>=', $endDate);
-                      });
-            })
-            ->exists();
-
-        if ($overlap) {
-            return back()->withErrors(['tanggal_mulai' => 'Anda sudah memiliki pengajuan cuti pada rentang tanggal tersebut.'])->withInput();
-        }
-
-        // --- HITUNG HARI KERJA (Senin-Jumat) ---
+        
+        // 2. Hitung Total Hari Kerja (Senin-Jumat)
         $totalHari = 0;
-        $currentDate = $startDate->copy();
-        while ($currentDate->lte($endDate)) {
-            if (!$currentDate->isWeekend()) {
+        $curr = $startDate->copy();
+        
+        while ($curr->lte($endDate)) {
+            // isWeekend() mengecek Sabtu & Minggu
+            if (!$curr->isWeekend()) {
                 $totalHari++;
             }
-            $currentDate->addDay();
+            $curr->addDay();
         }
 
-        if ($totalHari == 0) {
-            return back()->withErrors(['tanggal_mulai' => 'Rentang tanggal hanya berisi hari libur (Sabtu/Minggu).'])->withInput();
-        }
-
-        // --- CEK KUOTA (TAHUNAN) ---
+        // 3. Validasi H-3 (Khusus Cuti Tahunan)
+        // Syarat: Pengajuan minimal H-3 sebelum tanggal mulai
         if ($request->jenis_cuti == 'tahunan') {
-            if ($user->kuota_cuti < $totalHari) {
-                return back()->withErrors(['jenis_cuti' => 'Sisa kuota cuti tidak mencukupi.'])->withInput();
+            $today = Carbon::now()->startOfDay();
+            $minDate = $today->copy()->addDays(3);
+
+            if ($startDate->lt($minDate)) {
+                return back()->withErrors(['tanggal_mulai' => 'Untuk Cuti Tahunan, pengajuan minimal H-3 (Mulai: ' . $minDate->format('d M Y') . ')'])->withInput();
             }
         }
 
-        // --- UPLOAD BUKTI SAKIT ---
+        // 4. VALIDASI BARU: MASA KERJA < 1 TAHUN (Khusus Cuti Tahunan)
+        // Jika user belum 1 tahun bekerja, tolak cuti TAHUNAN (Sakit boleh)
+        if ($request->jenis_cuti == 'tahunan') {
+            // Hitung selisih tahun dari created_at sampai sekarang
+            if ($user->created_at->diffInYears(Carbon::now()) < 1) {
+                return back()->withErrors(['jenis_cuti' => 'Maaf, masa kerja Anda belum 1 tahun. Anda belum berhak mengajukan Cuti Tahunan.'])->withInput();
+            }
+
+            // Validasi Sisa Kuota
+            if ($user->kuota_cuti < $totalHari) {
+                return back()->withErrors(['jenis_cuti' => 'Sisa kuota cuti tahunan tidak mencukupi.'])->withInput();
+            }
+        }
+
+        // 5. Validasi Overlap (Tidak boleh mengajukan di tanggal yang sama dengan cuti lain yang aktif)
+        $isOverlapping = LeaveRequest::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'approved_leader', 'approved'])
+            ->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('tanggal_mulai', [$startDate, $endDate])
+                  ->orWhereBetween('tanggal_selesai', [$startDate, $endDate])
+                  ->orWhere(function($sub) use ($startDate, $endDate) {
+                      $sub->where('tanggal_mulai', '<=', $startDate)
+                          ->where('tanggal_selesai', '>=', $endDate);
+                  });
+            })->exists();
+
+        if ($isOverlapping) {
+             return back()->withErrors(['tanggal_mulai' => 'Anda sudah memiliki pengajuan cuti pada rentang tanggal tersebut.'])->withInput();
+        }
+
+        // 6. Upload Bukti Sakit (Jika Ada)
         $filePath = null;
-        if ($request->jenis_cuti == 'sakit') {
+        if ($request->hasFile('bukti_sakit')) {
             $filePath = $request->file('bukti_sakit')->store('surat_dokter', 'public');
         }
 
-        // --- SIMPAN DATA (FINAL) ---
+        // 7. Simpan Pengajuan
         LeaveRequest::create([
             'user_id' => $user->id,
             'jenis_cuti' => $request->jenis_cuti,
@@ -118,59 +133,90 @@ class LeaveRequestController extends Controller
             'total_hari' => $totalHari,
             'alasan' => $request->alasan,
             'bukti_sakit' => $filePath,
-            'status' => 'pending',
-            // Field Baru
+            'status' => 'pending', // Awal selalu pending
             'alamat_selama_cuti' => $request->alamat_selama_cuti,
             'nomor_darurat' => $request->nomor_darurat,
         ]);
 
-        // Potong kuota di awal (hanya cuti tahunan)
+        // 8. Potong Kuota (Hanya jika Cuti Tahunan)
         if ($request->jenis_cuti == 'tahunan') {
             $user->decrement('kuota_cuti', $totalHari);
         }
 
-        return redirect()->route('dashboard')->with('success', 'Pengajuan cuti berhasil dikirim!');
+        return redirect()->route('dashboard')->with('success', 'Pengajuan cuti berhasil dikirim.');
     }
 
-    public function cancel(LeaveRequest $leaveRequest)
+    public function show(LeaveRequest $leaveRequest)
     {
-        if (Auth::id() !== $leaveRequest->user_id) abort(403);
-        if ($leaveRequest->status !== 'pending') return back()->with('error', 'Hanya status pending yang bisa dibatalkan.');
+        // Pastikan yang melihat adalah pemilik, atasan, atau HRD/Admin
+        $user = Auth::user();
+        if ($user->id !== $leaveRequest->user_id && 
+            $user->role !== 'admin' && 
+            $user->role !== 'hrd' && 
+            $user->role !== 'ketua_divisi') {
+            abort(403);
+        }
 
+        return view('leaves.show', compact('leaveRequest'));
+    }
+
+    public function cancel(Request $request, LeaveRequest $leaveRequest)
+    {
+        // Hanya pemilik yang bisa membatalkan & status harus pending
+        if (Auth::id() !== $leaveRequest->user_id) abort(403);
+        if ($leaveRequest->status !== 'pending') return back()->with('error', 'Tidak bisa dibatalkan karena sudah diproses.');
+
+        $request->validate([
+            'alasan_pembatalan' => 'required|string'
+        ]);
+
+        // Kembalikan kuota jika tahunan
         if ($leaveRequest->jenis_cuti == 'tahunan') {
             $leaveRequest->user->increment('kuota_cuti', $leaveRequest->total_hari);
         }
 
+        // Hapus file jika ada
         if ($leaveRequest->bukti_sakit) {
             Storage::disk('public')->delete($leaveRequest->bukti_sakit);
         }
 
-        $leaveRequest->update(['status' => 'cancelled']);
-        return redirect()->route('dashboard')->with('success', 'Pengajuan dibatalkan, kuota dikembalikan.');
+        $leaveRequest->update([
+            'status' => 'cancelled',
+            'alasan_pembatalan' => $request->alasan_pembatalan
+        ]);
+
+        return back()->with('success', 'Pengajuan berhasil dibatalkan.');
     }
 
-    // ==========================================
-    // 2. FITUR APPROVAL KETUA DIVISI (ALUR 1)
-    // ==========================================
+    public function downloadPdf(LeaveRequest $leaveRequest)
+    {
+        // Cek hak akses (Pemilik, HRD, Ketua Divisi)
+        if (Auth::id() !== $leaveRequest->user_id && !in_array(Auth::user()->role, ['hrd', 'ketua_divisi'])) {
+            abort(403);
+        }
+
+        if ($leaveRequest->status !== 'approved') {
+            return back()->with('error', 'Hanya cuti yang disetujui yang dapat diunduh.');
+        }
+
+        $pdf = Pdf::loadView('leaves.print_pdf', compact('leaveRequest'));
+        return $pdf->download('Surat_Izin_Cuti_' . $leaveRequest->user->name . '.pdf');
+    }
+
+    // --- LEADER & HRD METHODS (Sama seperti sebelumnya) ---
 
     public function leaderIndex()
     {
         $leader = Auth::user();
-        
-        if ($leader->role !== 'ketua_divisi') {
-            abort(403, 'Halaman ini khusus Ketua Divisi.');
-        }
+        if ($leader->role !== 'ketua_divisi') abort(403);
 
-        $managedDivisi = $leader->divisiKetua; 
+        $managedDivisi = $leader->divisiKetua;
 
-        if (!$managedDivisi) {
-            return view('leaves.leader_index', ['pendingRequests' => collect([])]);
-        }
-
+        // Ambil pending request dari member divisi ini (kecuali diri sendiri)
         $pendingRequests = LeaveRequest::where('status', 'pending')
-            ->whereHas('user', function ($query) use ($managedDivisi, $leader) {
-                $query->where('divisi_id', $managedDivisi->id) 
-                      ->where('id', '!=', $leader->id);        
+            ->whereHas('user', function ($q) use ($managedDivisi, $leader) {
+                $q->where('divisi_id', $managedDivisi->id ?? 0)
+                  ->where('id', '!=', $leader->id);
             })
             ->with('user.divisi')
             ->get();
@@ -182,44 +228,39 @@ class LeaveRequestController extends Controller
     {
         if (Auth::user()->role !== 'ketua_divisi') abort(403);
 
-        if ($leaveRequest->user->divisi_id !== Auth::user()->divisiKetua->id) {
-            abort(403, 'Anda tidak berhak memproses cuti dari divisi lain.');
-        }
-
         $action = $request->input('action');
         $catatan = $request->input('catatan');
 
         if ($action === 'approve') {
             $leaveRequest->update([
-                'status' => 'approved_leader', 
+                'status' => 'approved_leader',
                 'catatan_leader' => $catatan
             ]);
-            $message = 'Disetujui. Pengajuan diteruskan ke HRD untuk finalisasi.';
         } elseif ($action === 'reject') {
             $request->validate(['catatan' => 'required|min:5']);
             
+            // Refund kuota
             if ($leaveRequest->jenis_cuti == 'tahunan') {
                 $leaveRequest->user->increment('kuota_cuti', $leaveRequest->total_hari);
             }
-            
+
             $leaveRequest->update([
-                'status' => 'rejected', 
+                'status' => 'rejected',
                 'catatan_penolakan' => 'Ditolak Ketua Divisi: ' . $catatan
             ]);
-            $message = 'Pengajuan ditolak.';
         }
 
-        return redirect()->route('leader.leaves.index')->with('success', $message ?? '');
+        return redirect()->route('leader.leaves.index')->with('success', 'Pengajuan berhasil diproses.');
     }
-
-    // ==========================================
-    // 3. FITUR APPROVAL HRD (FINAL)
-    // ==========================================
 
     public function hrdIndex()
     {
         if (Auth::user()->role !== 'hrd') abort(403);
 
+        // HRD melihat:
+        // 1. Status 'approved_leader' (Dari karyawan biasa via ketua)
+        // 2. Status 'pending' TAPI dari user role 'ketua_divisi' (Direct ke HRD)
+        
         $pendingRequests = LeaveRequest::with(['user', 'user.divisi'])
             ->where(function($q) {
                 $q->where('status', 'approved_leader')
@@ -245,9 +286,9 @@ class LeaveRequestController extends Controller
 
         if ($action === 'approve') {
             $leaveRequest->update(['status' => 'approved']);
-            $message = 'Pengajuan disetujui sepenuhnya (Final).';
+            $msg = 'Pengajuan disetujui (Final).';
         } elseif ($action === 'reject') {
-            $request->validate(['catatan' => 'required|min:5']);
+            $request->validate(['catatan' => 'required|min:10']);
 
             if ($leaveRequest->jenis_cuti == 'tahunan') {
                 $leaveRequest->user->increment('kuota_cuti', $leaveRequest->total_hari);
@@ -257,50 +298,61 @@ class LeaveRequestController extends Controller
                 'status' => 'rejected',
                 'catatan_penolakan' => 'Ditolak HRD: ' . $catatan
             ]);
-            $message = 'Pengajuan ditolak.';
+            $msg = 'Pengajuan ditolak.';
         }
 
-        return redirect()->route('hrd.leaves.index')->with('success', $message ?? '');
+        return redirect()->route('hrd.leaves.index')->with('success', $msg ?? 'Diproses.');
     }
 
-    // ==========================================
-    // 4. FITUR LAPORAN (REPORT)
-    // ==========================================
+    public function hrdBulkAction(Request $request)
+    {
+        if (Auth::user()->role !== 'hrd') abort(403);
+
+        $request->validate([
+            'ids' => 'required|string', 
+            'bulk_action' => 'required|in:approve,reject',
+            'bulk_catatan' => 'nullable|string'
+        ]);
+
+        $ids = explode(',', $request->ids);
+        $action = $request->bulk_action;
+        $catatan = $request->bulk_catatan;
+
+        if ($action === 'reject' && strlen($catatan) < 10) {
+            return back()->with('error', 'Catatan reject massal minimal 10 karakter.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $requests = LeaveRequest::whereIn('id', $ids)->get();
+            $count = 0;
+
+            foreach ($requests as $req) {
+                if ($action === 'approve') {
+                    $req->update(['status' => 'approved']);
+                } else {
+                    if ($req->jenis_cuti == 'tahunan') {
+                        $req->user->increment('kuota_cuti', $req->total_hari);
+                    }
+                    $req->update([
+                        'status' => 'rejected',
+                        'catatan_penolakan' => 'Bulk Reject HRD: ' . $catatan
+                    ]);
+                }
+                $count++;
+            }
+            DB::commit();
+            return redirect()->route('hrd.leaves.index')->with('success', "$count pengajuan berhasil diproses massal.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan sistem.');
+        }
+    }
 
     public function report()
     {
-        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'hrd') {
-            abort(403);
-        }
-
-        $leaves = LeaveRequest::with(['user', 'user.divisi'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
+        if (Auth::user()->role !== 'hrd') abort(403);
+        $leaves = LeaveRequest::with('user.divisi')->orderBy('created_at', 'desc')->get();
         return view('leaves.report', compact('leaves'));
-    }
-
-    // ==========================================
-    // 5. DOWNLOAD PDF
-    // ==========================================
-    
-    public function downloadPdf(LeaveRequest $leaveRequest)
-    {
-        $user = Auth::user();
-        
-        $isOwner = $user->id === $leaveRequest->user_id;
-        $isHRD = $user->role === 'hrd';
-        $isLeader = $user->role === 'ketua_divisi' && $user->divisiKetua?->id === $leaveRequest->user->divisi_id;
-
-        if (!$isOwner && !$isHRD && !$isLeader) {
-            abort(403);
-        }
-
-        if ($leaveRequest->status !== 'approved') {
-            return back()->with('error', 'Surat hanya bisa dicetak setelah status Approved.');
-        }
-
-        $pdf = Pdf::loadView('leaves.print_pdf', compact('leaveRequest'));
-        return $pdf->download('Surat_Cuti_' . $leaveRequest->user->name . '.pdf');
     }
 }
