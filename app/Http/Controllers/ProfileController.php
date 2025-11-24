@@ -17,8 +17,30 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        
+        // 1. LOGIKA HITUNG KUOTA (Khusus User & Ketua Divisi)
+        $quotaInfo = null;
+        
+        // Cek apakah role user berhak mendapatkan kuota cuti
+        if (in_array($user->role, ['user', 'ketua_divisi'])) {
+            $totalKuota = 12; // Default kuota tahunan
+            $sisaKuota = $user->kuota_cuti ?? 0; // Ambil dari DB
+            
+            // Hitung terpakai (Total - Sisa)
+            // Pastikan tidak minus (jika ada kesalahan data manual)
+            $terpakai = max(0, $totalKuota - $sisaKuota);
+            
+            $quotaInfo = [
+                'total' => $totalKuota,
+                'terpakai' => $terpakai,
+                'sisa' => $sisaKuota
+            ];
+        }
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'quotaInfo' => $quotaInfo,
         ]);
     }
 
@@ -28,27 +50,35 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        
-        // Isi data validasi dasar
-        $user->fill($request->validated());
+        $validated = $request->validated();
 
-        // Reset verifikasi email jika email berubah
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
-
-        // --- LOGIKA UPLOAD FOTO ---
+        // 2. LOGIKA UPLOAD FOTO PROFIL
         if ($request->hasFile('foto_profil')) {
-            // Hapus foto lama jika ada (opsional, biar hemat storage)
+            // Hapus foto lama jika ada (agar tidak menuhin storage)
             if ($user->foto_profil && Storage::disk('public')->exists($user->foto_profil)) {
                 Storage::disk('public')->delete($user->foto_profil);
             }
-
-            // Simpan foto baru
-            $path = $request->file('foto_profil')->store('foto_profil', 'public');
+            
+            // Simpan foto baru ke folder 'fotos' di disk 'public'
+            $path = $request->file('foto_profil')->store('fotos', 'public');
             $user->foto_profil = $path;
         }
-        // --------------------------
+
+        // 3. PEMBATASAN HAK AKSES EDIT
+        if ($user->role === 'admin') {
+            // Admin SULTAN: Bisa ubah Nama & Email
+            $user->fill($validated);
+
+            // Jika email berubah, reset verifikasi email
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
+        } else {
+            // Rakyat Jelata (User/Ketua/HRD): Hanya update data pendukung
+            // Nama & Email diabaikan meskipun dikirim dari form (security measure)
+            $user->nomor_telepon = $validated['nomor_telepon'] ?? $user->nomor_telepon;
+            $user->alamat = $validated['alamat'] ?? $user->alamat;
+        }
 
         $user->save();
 
