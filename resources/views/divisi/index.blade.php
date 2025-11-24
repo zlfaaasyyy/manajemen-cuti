@@ -1,43 +1,34 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="font-semibold text-xl text-stone-800 leading-tight">
             {{ __('Manajemen Divisi') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-12" style="background-color: #F8F8F8;">
+        <!-- Container Lebar -->
+        <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
             
             @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
                     {{ session('success') }}
                 </div>
             @endif
+            @if (session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-xl shadow-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <!-- MAIN CARD: Tabel Data -->
+            <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 
-                <!-- TOOLBAR: SEARCH & SORT & ADD -->
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
-                    
-                    <!-- Filter & Search -->
-                    <form method="GET" action="{{ route('divisi.index') }}" class="flex w-full md:w-auto space-x-2">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari divisi / ketua..." class="border rounded px-3 py-2 text-sm w-full md:w-64 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                        
-                        <select name="sort" class="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600" onchange="this.form.submit()">
-                            <option value="nama_asc" {{ request('sort') == 'nama_asc' ? 'selected' : '' }}>Nama (A-Z)</option>
-                            <option value="nama_desc" {{ request('sort') == 'nama_desc' ? 'selected' : '' }}>Nama (Z-A)</option>
-                            <option value="anggota_banyak" {{ request('sort') == 'anggota_banyak' ? 'selected' : '' }}>Anggota Terbanyak</option>
-                            <option value="anggota_sedikit" {{ request('sort') == 'anggota_sedikit' ? 'selected' : '' }}>Anggota Sedikit</option>
-                            <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                        </select>
-                        
-                        <button type="submit" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </button>
-                    </form>
-
-                    <!-- Tombol Tambah -->
-                    <a href="{{ route('divisi.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center">
+                <!-- TOOLBAR: Tombol Tambah -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-extrabold text-xl text-stone-800">Daftar Divisi Aktif</h3>
+                    <a href="{{ route('divisi.create') }}" 
+                        class="px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition flex items-center hover:opacity-90" 
+                        style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7); border: none; font-size: 15px;">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Tambah Divisi
                     </a>
@@ -45,54 +36,58 @@
 
                 <!-- TABEL DATA -->
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead style="background-color: #F8F8F8;">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Divisi</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ketua Divisi</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Anggota</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Divisi</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ketua Divisi</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total Anggota</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse($divisi as $d)
+                        <tbody class="divide-y divide-gray-200">
+                            {{-- PERBAIKAN: Menggunakan $divisis dari controller --}}
+                            @forelse($divisis as $divisi)
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
-                                    {{ $d->nama }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $d->ketuaDivisi->name ?? 'Belum Ada' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $d->users_count }} Orang
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                    <!-- Detail -->
-                                    <a href="{{ route('divisi.show', $d->id) }}" class="text-green-600 hover:text-green-900 font-bold" title="Lihat Anggota">
-                                        Detail
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-stone-800">
+                                    <a href="{{ route('divisi.show', $divisi->id) }}" class="hover:text-amber-600 transition">
+                                        {{ $divisi->nama }}
                                     </a>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{-- PERBAIKAN: Menggunakan relasi ketuaDivisi --}}
+                                    {{ $divisi->ketuaDivisi->name ?? 'Belum Ditunjuk' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-800">
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full bg-gray-100 text-gray-700">
+                                        {{ $divisi->users_count }} Anggota
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                    <!-- Tombol Detail (Orange) -->
+                                    <a href="{{ route('divisi.show', $divisi->id) }}" class="text-amber-600 hover:text-amber-800 font-bold">Detail</a>
                                     
-                                    <!-- Edit -->
-                                    <a href="{{ route('divisi.edit', $d->id) }}" class="text-blue-600 hover:text-blue-900 font-bold">Edit</a>
+                                    <!-- Tombol Edit (Biru) -->
+                                    <a href="{{ route('divisi.edit', $divisi->id) }}" class="text-blue-600 hover:text-blue-800 font-bold">Edit</a>
                                     
-                                    <!-- Hapus (Trigger Modal) -->
-                                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-divisi-{{ $d->id }}')" class="text-red-600 hover:text-red-900 font-bold">
+                                    <!-- Tombol Hapus (Merah) -->
+                                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-divisi-{{ $divisi->id }}')" class="text-red-600 hover:text-red-800 font-bold">
                                         Hapus
                                     </button>
                                 </td>
                             </tr>
 
-                            <!-- MODAL KONFIRMASI HAPUS (Double Confirmation) -->
-                            <x-modal name="delete-divisi-{{ $d->id }}" focusable>
-                                <form method="POST" action="{{ route('divisi.destroy', $d->id) }}" class="p-6">
+                            <!-- MODAL KONFIRMASI HAPUS -->
+                            <x-modal name="delete-divisi-{{ $divisi->id }}" focusable>
+                                <form method="POST" action="{{ route('divisi.destroy', $divisi->id) }}" class="p-6">
                                     @csrf
                                     @method('DELETE')
                                     
-                                    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                        Hapus Divisi {{ $d->nama }}?
+                                    <h2 class="text-lg font-medium text-gray-900">
+                                        Hapus Divisi {{ $divisi->nama }}?
                                     </h2>
-                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                        Peringatan: Menghapus divisi ini akan membuat semua anggotanya kehilangan status divisi (menjadi null). Aksi ini tidak dapat dibatalkan.
+                                    <p class="mt-1 text-sm text-gray-600">
+                                        Peringatan: Menghapus divisi ini akan menghapus semua anggotanya, dan menonaktifkan akun mereka. Tindakan ini tidak dapat dibatalkan.
                                     </p>
                                     
                                     <div class="mt-6 flex justify-end">
@@ -104,7 +99,7 @@
 
                             @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Belum ada divisi.</td>
+                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">Tidak ada data divisi yang ditemukan.</td>
                             </tr>
                             @endforelse
                         </tbody>

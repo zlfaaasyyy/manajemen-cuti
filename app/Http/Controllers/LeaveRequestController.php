@@ -123,8 +123,21 @@ class LeaveRequestController extends Controller
         if ($request->hasFile('bukti_sakit')) {
             $filePath = $request->file('bukti_sakit')->store('surat_dokter', 'public');
         }
+        
+        // 7. --- LOGIKA PENENTUAN STATUS AWAL (PERBAIKAN INI SUDAH BENAR) ---
+        $initialStatus = 'pending';
+        $leaderApprovedAt = null;
+        $catatanLeader = null;
 
-        // 7. Simpan Pengajuan
+        // Jika user adalah Ketua Divisi, set status langsung ke 'approved_leader'
+        if ($user->role === 'ketua_divisi') {
+            $initialStatus = 'approved_leader'; 
+            $leaderApprovedAt = now();          
+            $catatanLeader = 'Pengajuan langsung oleh Ketua Divisi.';
+        }
+        // --------------------------------------------------------
+
+        // 8. Simpan Pengajuan
         LeaveRequest::create([
             'user_id' => $user->id,
             'jenis_cuti' => $request->jenis_cuti,
@@ -133,12 +146,17 @@ class LeaveRequestController extends Controller
             'total_hari' => $totalHari,
             'alasan' => $request->alasan,
             'bukti_sakit' => $filePath,
-            'status' => 'pending', // Awal selalu pending
+            'status' => $initialStatus, // Menggunakan status yang sudah disesuaikan
             'alamat_selama_cuti' => $request->alamat_selama_cuti,
             'nomor_darurat' => $request->nomor_darurat,
+            
+            // Kolom ini akan terisi jika user adalah Ketua Divisi
+            'catatan_leader' => $catatanLeader, 
+            'approved_leader_at' => $leaderApprovedAt,
         ]);
 
-        // 8. Potong Kuota (Hanya jika Cuti Tahunan)
+        // 9. Potong Kuota (Hanya jika Cuti Tahunan)
+        // PENTING: Kuota dipotong HANYA saat pengajuan dibuat. Jika ditolak/dibatalkan, kuota dikembalikan.
         if ($request->jenis_cuti == 'tahunan') {
             $user->decrement('kuota_cuti', $totalHari);
         }
@@ -153,18 +171,22 @@ class LeaveRequestController extends Controller
         if ($user->id !== $leaveRequest->user_id && 
             $user->role !== 'admin' && 
             $user->role !== 'hrd' && 
-            $user->role !== 'ketua_divisi') {
+            ($user->role !== 'ketua_divisi' || $user->divisiKetua->id !== $leaveRequest->user->divisi_id)) { // Logic Ketua Divisi
             abort(403);
         }
 
-        return view('leaves.show', compact('leaveRequest'));
+        return view('leaves.show', ['leave' => $leaveRequest]); // Mengganti nama variabel agar konsisten dengan view
     }
 
     public function cancel(Request $request, LeaveRequest $leaveRequest)
     {
         // Hanya pemilik yang bisa membatalkan & status harus pending
         if (Auth::id() !== $leaveRequest->user_id) abort(403);
-        if ($leaveRequest->status !== 'pending') return back()->with('error', 'Tidak bisa dibatalkan karena sudah diproses.');
+        
+        // Pengecekan status yang boleh dibatalkan: Hanya 'pending' dan 'approved_leader'
+        if (!in_array($leaveRequest->status, ['pending', 'approved_leader'])) {
+            return back()->with('error', 'Tidak bisa dibatalkan karena sudah diproses final (Approved/Rejected).');
+        }
 
         $request->validate([
             'alasan_pembatalan' => 'required|string'
@@ -185,7 +207,7 @@ class LeaveRequestController extends Controller
             'alasan_pembatalan' => $request->alasan_pembatalan
         ]);
 
-        return back()->with('success', 'Pengajuan berhasil dibatalkan.');
+        return back()->with('success', 'Pengajuan berhasil dibatalkan. Kuota cuti telah dikembalikan.');
     }
 
     public function downloadPdf(LeaveRequest $leaveRequest)
@@ -199,7 +221,13 @@ class LeaveRequestController extends Controller
             return back()->with('error', 'Hanya cuti yang disetujui yang dapat diunduh.');
         }
 
-        $pdf = Pdf::loadView('leaves.print_pdf', compact('leaveRequest'));
+        // PERBAIKAN NAMA VARIABEL UNTUK VIEW PDF
+        $leave = $leaveRequest; 
+        
+        // Nama HRD Manager diambil dari user HRD pertama yang ditemukan
+        $hrdManager = \App\Models\User::where('role', 'hrd')->first();
+        
+        $pdf = Pdf::loadView('leaves.pdf', compact('leave', 'hrdManager'));
         return $pdf->download('Surat_Izin_Cuti_' . $leaveRequest->user->name . '.pdf');
     }
 
@@ -219,6 +247,7 @@ class LeaveRequestController extends Controller
                   ->where('id', '!=', $leader->id);
             })
             ->with('user.divisi')
+            ->orderBy('created_at', 'asc') // Urutkan yang paling lama dulu
             ->get();
 
         return view('leaves.leader_index', compact('pendingRequests'));
@@ -234,7 +263,8 @@ class LeaveRequestController extends Controller
         if ($action === 'approve') {
             $leaveRequest->update([
                 'status' => 'approved_leader',
-                'catatan_leader' => $catatan
+                'catatan_leader' => $catatan,
+                'approved_leader_at' => now(), // Catat waktu persetujuan
             ]);
         } elseif ($action === 'reject') {
             $request->validate(['catatan' => 'required|min:5']);
@@ -259,20 +289,20 @@ class LeaveRequestController extends Controller
 
         // HRD melihat:
         // 1. Status 'approved_leader' (Dari karyawan biasa via ketua)
-        // 2. Status 'pending' TAPI dari user role 'ketua_divisi' (Direct ke HRD)
+        // 2. Status 'approved_leader' dari Ketua Divisi (karena logic store membuat statusnya langsung 'approved_leader')
+        //    ATAU PENDING dari Ketua Divisi (jika logic store-nya nanti diubah, tapi untuk saat ini, statusnya langsung approved_leader)
+        
+        // PERBAIKAN: Hanya perlu mencari status 'approved_leader' saja.
+        // Jika Ketua Divisi mengajukan, statusnya langsung disetel ke 'approved_leader' di method store.
         
         $pendingRequests = LeaveRequest::with(['user', 'user.divisi'])
-            ->where(function($q) {
-                $q->where('status', 'approved_leader')
-                  ->orWhere(function($subQ) {
-                      $subQ->where('status', 'pending')
-                           ->whereHas('user', function($userQ) {
-                               $userQ->where('role', 'ketua_divisi');
-                           });
-                  });
-            })
-            ->orderBy('created_at', 'desc')
+            ->where('status', 'approved_leader')
+            ->orderBy('created_at', 'asc')
             ->get();
+
+        // Keterangan: Jika Ketua Divisi mengajukan, statusnya langsung approved_leader.
+        // Jika Karyawan biasa mengajukan dan sudah di-approve Leader, statusnya juga approved_leader.
+        // Jadi, semua yang butuh aksi final HRD statusnya adalah 'approved_leader'.
 
         return view('leaves.hrd_index', compact('pendingRequests'));
     }
@@ -285,18 +315,25 @@ class LeaveRequestController extends Controller
         $catatan = $request->input('catatan');
 
         if ($action === 'approve') {
-            $leaveRequest->update(['status' => 'approved']);
+             // Pastikan cuti sakit tidak memotong kuota tahunan
+            $leaveRequest->update([
+                'status' => 'approved',
+                'approved_hrd_at' => now(),
+                'catatan_hrd' => $catatan // Menambahkan kolom catatan HRD
+            ]);
             $msg = 'Pengajuan disetujui (Final).';
         } elseif ($action === 'reject') {
             $request->validate(['catatan' => 'required|min:10']);
 
-            if ($leaveRequest->jenis_cuti == 'tahunan') {
+            // Refund kuota hanya jika cuti tahunan dan status sebelumnya bukan 'rejected'
+            if ($leaveRequest->jenis_cuti == 'tahunan' && $leaveRequest->status !== 'rejected') {
                 $leaveRequest->user->increment('kuota_cuti', $leaveRequest->total_hari);
             }
 
             $leaveRequest->update([
                 'status' => 'rejected',
-                'catatan_penolakan' => 'Ditolak HRD: ' . $catatan
+                'catatan_penolakan' => 'Ditolak HRD: ' . $catatan,
+                'approved_hrd_at' => now(),
             ]);
             $msg = 'Pengajuan ditolak.';
         }
@@ -329,13 +366,19 @@ class LeaveRequestController extends Controller
 
             foreach ($requests as $req) {
                 if ($action === 'approve') {
-                    $req->update(['status' => 'approved']);
+                    $req->update([
+                        'status' => 'approved',
+                        'approved_hrd_at' => now(),
+                        'catatan_hrd' => 'Bulk Approve HRD',
+                    ]);
                 } else {
-                    if ($req->jenis_cuti == 'tahunan') {
+                    // Hanya refund jika tahunan dan belum rejected sebelumnya
+                    if ($req->jenis_cuti == 'tahunan' && $req->status !== 'rejected') {
                         $req->user->increment('kuota_cuti', $req->total_hari);
                     }
                     $req->update([
                         'status' => 'rejected',
+                        'approved_hrd_at' => now(),
                         'catatan_penolakan' => 'Bulk Reject HRD: ' . $catatan
                     ]);
                 }
