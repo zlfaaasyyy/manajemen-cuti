@@ -74,14 +74,20 @@
                                     <!-- Tombol Edit (Biru) -->
                                     <a href="{{ route('users.edit', $user->id) }}" class="text-blue-600 hover:text-blue-800 font-bold">Edit</a>
                                     
-                                    <!-- Tombol Hapus (Merah) -->
-                                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-user-{{ $user->id }}')" class="text-red-600 hover:text-red-800 font-bold">
-                                        Hapus
-                                    </button>
+                                    <!-- LOGIKA PENTING: TOMBOL HAPUS -->
+                                    @if(in_array($user->role, ['user', 'ketua_divisi']))
+                                        <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-user-{{ $user->id }}')" class="text-red-600 hover:text-red-800 font-bold">
+                                            Hapus
+                                        </button>
+                                    @else
+                                        <!-- Tidak menampilkan tombol Hapus untuk Admin/HRD -->
+                                        <span class="text-xs text-gray-400 italic">Core User</span>
+                                    @endif
                                 </td>
                             </tr>
 
-                            <!-- MODAL KONFIRMASI HAPUS -->
+                            <!-- MODAL KONFIRMASI HAPUS (Hanya tampil jika tombol Hapus muncul) -->
+                            @if(in_array($user->role, ['user', 'ketua_divisi']))
                             <x-modal name="delete-user-{{ $user->id }}" focusable>
                                 <form method="POST" action="{{ route('users.destroy', $user->id) }}" class="p-6">
                                     @csrf
@@ -100,6 +106,7 @@
                                     </div>
                                 </form>
                             </x-modal>
+                            @endif
 
                             @empty
                             <tr>
