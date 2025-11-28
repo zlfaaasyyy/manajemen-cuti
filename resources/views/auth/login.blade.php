@@ -2,9 +2,14 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    <!-- Card Container: Styling Single Box yang Bersih -->
+    <div class="p-8 bg-white rounded-[30px] max-w-sm w-full" 
+         style="box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 0 0 1px #f0f0f0; border: none; background-color: #FFFFFF; transition: all 0.3s ease;">
+        
         <div class="flex flex-col items-center justify-center mb-6">
             <a href="/" class="flex items-center gap-2">
-                <x-application-logo class="w-12 h-12 fill-current" style="color: #ABC270;" /> 
+                <img src="{{ asset('calendar-heart.png') }}" alt="Logo Sistem Cuti" class="w-12 h-12 object-contain" />
+                
                 <span class="text-2xl font-bold text-stone-800">Sistem Cuti</span>
             </a>
             <p class="text-sm text-gray-500 mt-2">Masuk untuk mengelola pengajuan cuti</p>
@@ -18,7 +23,7 @@
                 <label for="email" class="block font-medium text-sm text-gray-700">
                     Email / Username
                 </label>
-                <!-- Input Field: Border tunggal tipis dan background terang -->
+                <!-- Input Field: Clean Single Border -->
                 <input id="email" 
                        class="block mt-1 w-full focus:ring-amber-500 rounded-xl py-2.5 px-4 text-stone-700 focus:border-none focus:ring-2" 
                        type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" 
@@ -32,7 +37,7 @@
                 <label for="password" class="block font-medium text-sm text-gray-700">
                     Password
                 </label>
-                <!-- Input Field: Border tunggal tipis dan background terang -->
+                <!-- Input Field: Clean Single Border -->
                 <input id="password" 
                        class="block mt-1 w-full focus:ring-amber-500 rounded-xl py-2.5 px-4 text-stone-700 focus:border-none focus:ring-2" 
                        type="password" name="password" required autocomplete="current-password" 
