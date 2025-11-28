@@ -35,7 +35,8 @@
                             {{ $leave->status == 'approved' ? 'bg-green-100 text-green-800' : 
                               ($leave->status == 'rejected' ? 'bg-red-100 text-red-800' : 
                               ($leave->status == 'cancelled' ? 'bg-stone-800 text-white' : 
-                              ($leave->status == 'pending' ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-800'))) }}"
+                              ($leave->status == 'pending' ? 'bg-gray-100 text-gray-700' : 
+                              ($leave->status == 'approved_leader' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700')))) }}"
                               style="font-size: 14px;">
                             {{ ucfirst(str_replace('_', ' ', $leave->status)) }}
                         </span>
@@ -92,7 +93,8 @@
                 <div class="mt-8 pt-6 border-t" style="border-color: #f0f0f0;">
                     <h4 class="text-xl font-extrabold text-stone-800 mb-4">Timeline Persetujuan</h4>
                     <ol class="relative border-s border-gray-200 ml-4">                  
-                        <!-- 1. PENGARSIPAN HRD (Final) -->
+                        
+                        <!-- 1. KEPUTUSAN FINAL HRD -->
                         <li class="mb-6 ms-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3 ring-8 ring-white" 
                                   style="background-color: #473C33; color: white;">
@@ -110,7 +112,7 @@
                                 <time class="block mb-2 text-xs font-normal leading-none text-gray-400">{{ $leave->approved_hrd_at->format('d F Y, H:i') }}</time>
                             @endif
                             <p class="text-sm font-normal text-gray-500">
-                                Catatan HRD: <span class="font-semibold">{{ $leave->catatan_hrd ?? ($leave->status == 'approved' ? 'Disetujui tanpa catatan.' : 'Belum diproses.') }}</span>
+                                Catatan HRD: <span class="font-semibold">{{ $leave->catatan_hrd ?? ($leave->status == 'approved' ? 'Disetujui tanpa catatan.' : ($leave->status == 'rejected' ? $leave->catatan_penolakan : 'Menunggu persetujuan HRD.')) }}</span>
                             </p>
                             @if($leave->status == 'approved')
                                 <a href="{{ route('leaves.pdf', $leave->id) }}" class="inline-flex items-center px-4 py-2 mt-2 text-xs font-bold text-white bg-amber-500 rounded-xl hover:bg-amber-600 transition" style="background-color: #FDA769; box-shadow: 0 2px 4px rgba(253, 167, 105, 0.5);">
@@ -119,26 +121,36 @@
                             @endif
                         </li>
                         
-                        <!-- 2. VERIFIKASI KETUA DIVISI -->
+                        <!-- 2. VERIFIKASI KETUA DIVISI (LOGIKA SUDAH FIX) -->
                         <li class="mb-6 ms-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3 ring-8 ring-white" 
                                   style="background-color: #ABC270; color: white;">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2-4v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
                             </span>
+                            
                             <h3 class="flex items-center mb-1 text-lg font-semibold text-stone-800">
                                 Persetujuan Ketua Divisi 
-                                @if($leave->status == 'approved_leader')
-                                    <span class="bg-amber-100 text-amber-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded ms-3">DISETUJUI (LANJUT KE HRD)</span>
-                                @elseif($leave->status == 'rejected')
-                                     <span class="bg-red-100 text-red-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded ms-3">DITOLAK DI TINGKAT LEADER</span>
+                                
+                                @if($leave->status == 'rejected' && $leave->catatan_penolakan && str_contains($leave->catatan_penolakan, 'Ditolak Ketua Divisi'))
+                                     <span class="bg-red-100 text-red-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded ms-3">DITOLAK LEADER</span>
+                                @elseif($leave->approved_leader_at || $leave->status == 'approved' || $leave->status == 'rejected')
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded ms-3">SUDAH DISETUJUI</span>
+                                @else
+                                    <span class="bg-gray-100 text-gray-700 text-sm font-medium me-2 px-2.5 py-0.5 rounded ms-3">MENUNGGU VERIFIKASI</span>
                                 @endif
                             </h3>
-                            @if($leave->approved_leader_at)
+                            
+                            @if($leave->user->role == 'ketua_divisi')
+                                <time class="block mb-2 text-xs font-normal leading-none text-gray-400">Pengajuan Langsung ke HRD</time>
+                                <p class="text-sm font-normal text-gray-500">Catatan Leader: <span class="font-semibold">Melewati verifikasi atasan (Ketua Divisi mengajukan sendiri).</span></p>
+                            @elseif($leave->approved_leader_at)
                                 <time class="block mb-2 text-xs font-normal leading-none text-gray-400">Oleh: {{ $leave->user->divisi->ketuaDivisi->name ?? 'N/A' }}, pada {{ $leave->approved_leader_at->format('d F Y, H:i') }}</time>
+                                <p class="text-sm font-normal text-gray-500">Catatan Leader: <span class="font-semibold">{{ $leave->catatan_leader ?? 'Disetujui tanpa catatan.' }}</span></p>
+                            @elseif($leave->status == 'rejected' && str_contains($leave->catatan_penolakan, 'Ditolak Ketua Divisi'))
+                                <p class="text-sm font-normal text-red-500">Ditolak oleh Leader pada tahap ini. Lihat catatan HRD di atas.</p>
+                            @else
+                                <p class="text-sm font-normal text-gray-500">Sudah diproses oleh Ketua Divisi.</p>
                             @endif
-                            <p class="text-sm font-normal text-gray-500">
-                                Catatan Leader: <span class="font-semibold">{{ $leave->catatan_leader ?? ($leave->user->role == 'ketua_divisi' ? 'Ketua mengajukan langsung.' : 'Belum diproses Leader.') }}</span>
-                            </p>
                         </li>
 
                         <!-- 3. PENGAJUAN AWAL -->
@@ -155,14 +167,14 @@
                             </h3>
                             <time class="block mb-2 text-xs font-normal leading-none text-gray-400">{{ $leave->created_at->format('d F Y, H:i') }}</time>
                             @if($leave->status == 'cancelled')
-                                <p class="text-sm font-normal text-red-500 font-semibold">Dibatalkan oleh Karyawan. Kuota cuti telah dikembalikan.</p>
+                                <p class="text-sm font-normal text-red-500 font-semibold">Dibatalkan oleh Karyawan. Alasan: {{ $leave->alasan_pembatalan ?? 'Tidak ada alasan.' }}</p>
                             @endif
                         </li>
                     </ol>
                 </div>
                 
-                <!-- TOMBOL AKSI KARYAWAN (Hanya untuk User yang mengajukan dan status masih pending) -->
-                @if(auth()->user()->id == $leave->user_id && $leave->status == 'pending')
+                <!-- TOMBOL AKSI KARYAWAN (Hanya untuk User yang mengajukan dan status masih pending/approved_leader) -->
+                @if(auth()->user()->id == $leave->user_id && in_array($leave->status, ['pending', 'approved_leader']))
                     <div class="mt-8 pt-6 border-t flex justify-end" style="border-color: #f0f0f0;">
                         <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'cancel-modal')" 
                                 class="px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition" 
@@ -179,7 +191,7 @@
     <x-modal name="cancel-modal" focusable>
         <form method="POST" action="{{ route('leaves.cancel', $leave->id) }}" class="p-6">
             @csrf
-            @method('PATCH')
+            @method('DELETE') <!-- Mengubah PATCH menjadi DELETE agar konsisten dengan route delete -->
             
             <h2 class="text-xl font-bold text-red-600 flex items-center">
                 <span class="bg-red-100 text-red-600 p-2 rounded-full mr-3">
@@ -188,7 +200,7 @@
                 Konfirmasi Pembatalan Cuti
             </h2>
             <p class="mt-3 text-sm text-gray-600">
-                Anda akan membatalkan pengajuan cuti ini. Kuota cuti tahunan akan dikembalikan secara otomatis.
+                Anda akan membatalkan pengajuan cuti ini. Kuota cuti tahunan (jika terpotong) akan dikembalikan.
             </p>
 
             <div class="mt-4">

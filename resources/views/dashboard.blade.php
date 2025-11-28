@@ -5,13 +5,10 @@
         </h2>
     </x-slot>
 
-    <!-- LEBAR KONTEN MENYESUAIKAN LAYOUT BARU (max-w-screen-xl) -->
     <div class="py-12">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8 space-y-8">
             
-            <!-- ============================================= -->
-            <!-- 1. DASHBOARD ADMIN -->
-            <!-- ============================================= -->
+            {{-- DASHBOARD ADMIN --}}
             @if(auth()->user()->role === 'admin')
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Stat Cards -->
