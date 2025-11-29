@@ -1,138 +1,84 @@
-<p align="center"><a href="#" target="_blank"><img src="https://www.google.com/search?q=https://placehold.co/400x120/473C33/FFFFFF%3Ftext%3DE-LEAVE%2BSYSTEM" alt="E-Leave System Logo"></a></p>
+# Sistem Manajemen Cuti Karyawan (E-Leave System)
 
-<h1 align="center">Sistem Manajemen Cuti Karyawan</h1>
-<h4 align="center">Dibangun dengan Laravel & Tailwind CSS</h4>
+Aplikasi web berbasis Laravel untuk mendigitalisasi proses pengajuan dan persetujuan cuti karyawan dengan alur multilevel yang rapi, transparan, dan akurat.
 
-<p align="center">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Laravel-10.x%2B-red.svg" alt="Laravel Version">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Tailwind%2520CSS-v3-blue.svg" alt="Tailwind CSS">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/STATUS-Complete-success.svg" alt="Project Status">
-<img src="https://img.shields.io/packagist/l/laravel/framework" alt="License">
-</p>
+## 📌 Deskripsi Proyek
+Sistem Manajemen Cuti Karyawan (E-Leave System) dikembangkan untuk membantu perusahaan mengelola proses cuti secara digital dan efisien. Dibangun menggunakan Laravel dan Tailwind CSS, sistem ini mendukung alur persetujuan dua tingkat, otomatisasi kuota, hingga pembuatan dokumen cuti berbentuk PDF. Tujuan utama mencakup pengelolaan kuota realtime, persetujuan berjenjang, dan penghapusan proses berbasis kertas.
 
-Tentang Sistem (About This Project)
+## 🔐 Peran Pengguna & Fitur Utama
+### Admin
+- CRUD User & Divisi  
+- Statistik global  
+- Daftar karyawan baru (< 1 tahun)
 
-Sistem ini dirancang untuk mendigitalisasi dan menyederhanakan proses pengajuan, verifikasi, dan persetujuan cuti karyawan di lingkungan perusahaan. Tujuannya adalah memastikan alur cuti yang transparan dan akurat, serta memfasilitasi manajemen kuota cuti tahunan.
+### HRD
+- Verifikasi final (Level 2)  
+- Bulk approve/reject  
+- Dashboard laporan  
+- Tidak dapat dihapus
 
-Sistem ini dibangun di atas Laravel, memanfaatkan fitur-fitur intinya untuk efisiensi pengembangan dan sintaks yang elegan.
+### Ketua Divisi
+- Verifikasi awal (Level 1)  
+- Dashboard tim  
+- Kuota pribadi  
+- Bisa mengajukan cuti pribadi
 
-Fitur Utama Proyek
+### User
+- Pengajuan cuti  
+- Melihat kuota realtime  
+- Riwayat pengajuan
 
-Manajemen Berbasis Role: Mendukung 4 peran: Admin, HRD, Ketua Divisi, dan User.
+## ⚙️ Fungsionalitas Utama
+| Modul | Deskripsi |
+|-------|-----------|
+| Pengajuan | Validasi overlap + hitung hari kerja |
+| Kuota | Berkurang hanya setelah approved final |
+| Verifikasi | Catatan wajib saat reject |
+| PDF | Cetak Surat Cuti |
+| Foto Profil | Replace otomatis foto lama |
 
-Perhitungan Kuota: Kuota cuti tahunan (default 12 hari) dikelola dan dikurangi secara realtime setelah cuti disetujui HRD.
+## 🛠️ Instalasi & Setup (Full Dalam Satu Blok)
+Semua langkah instalasi digabung menjadi satu alur tanpa dipisah agar mudah di-copy.
 
-Alur Verifikasi Bertingkat: Pengajuan harus disetujui oleh Ketua Divisi, sebelum disetujui final oleh HRD.
-
-Manajemen Master Data: CRUD untuk User dan Divisi.
-
-Peran Pengguna & Hak Akses
-
-Peran
-
-Deskripsi
-
-Hak Akses Khusus
-
-Admin
-
-Pengelola sistem utama (Superuser).
-
-CRUD Manajemen User & Divisi. Mengawasi sistem dan laporan global. (Tidak mengajukan cuti)
-
-HRD
-
-Bertanggung jawab atas persetujuan final.
-
-Verifikasi Final (Approve/Reject), Laporan Cuti Global, Daftar Karyawan Cuti Bulan Ini. (Hanya 1 slot & tidak dapat dihapus)
-
-Ketua Divisi
-
-Bertanggung jawab atas verifikasi awal timnya.
-
-Verifikasi Awal (Approve/Reject) untuk anggota tim. Memiliki kuota cuti pribadi.
-
-User (Karyawan)
-
-Karyawan biasa.
-
-Mengajukan cuti, Melihat sisa kuota, Melacak riwayat pengajuan.
-
-🛠️ Instalasi dan Setup
-
-Ikuti langkah-langkah standar instalasi Laravel untuk menjalankan proyek ini di lingkungan lokal Anda.
-
-Persyaratan
-
-PHP >= 8.1
-
-Composer
-
-Node.js & NPM / Yarn
-
-Database (MySQL/MariaDB)
-
-Langkah-langkah
-
-Clone Repository:
-
+### **Langkah Setup**
+**1. Clone Repositori**
+```bash
 git clone [URL_REPOSITORY_ANDA]
 cd nama-folder-proyek
+```
 
-
-Instal Dependensi PHP:
-
+**2. Instal Dependensi Backend & Frontend**
+```bash
 composer install
-
-
-Buat File Environment (.env):
-
-cp .env.example .env
-# Edit file .env dan atur DB_DATABASE, DB_USERNAME, DB_PASSWORD.
-
-
-Generate Application Key & Frontend:
-
-php artisan key:generate
 npm install
-npm run dev
+```
 
+**3. Konfigurasi Environment**
+```bash
+cp .env.example .env
+php artisan key:generate
 
-Jalankan Migrasi dan Storage Link:
+Edit file .env dan sesuaikan:
+# DB_HOST
+# DB_DATABASE
+# DB_USERNAME
+# DB_PASSWORD
+```
 
+**4. Migrasi Database + Seeder Default**
+```bash
 php artisan migrate --seed
-php artisan storage:link # PENTING untuk foto profil
+```
 
+**5. Setup Storage (Foto Profil)**
+```bash
+php artisan storage:link
+```
 
-Jalankan Server Lokal:
-
+**6. Jalankan Server Backend & Frontend**
+```bash
+npm run dev
 php artisan serve
+```
 
-
-Sistem akan tersedia di http://127.0.0.1:8000.
-
-🔑 Akun Uji Coba
-
-Gunakan kredensial yang Anda sediakan di file seeder:
-
-Role
-
-Email (Contoh)
-
-Password (Contoh)
-
-Admin
-
-admin@app.com
-
-password
-
-HRD
-
-hrd@app.com
-
-password
-
-License
-
-Proyek ini dirilis di bawah lisensi MIT.
+### Akses di: http://127.0.0.1:8000/
