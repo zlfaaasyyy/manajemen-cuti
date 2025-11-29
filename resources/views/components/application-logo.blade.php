@@ -1,4 +1,4 @@
 <svg fill="#000000" width="80px" height="80px" viewBox="0 0 24 24" id="calendar-event" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color">
-                    <path id="primary" d="M21,19l-2,2V19ZM20,4H4A1,1,0,0,0,3,5V20a1,1,0,0,0,1,1H19l2-2V5A1,1,0,0,0,20,4Z" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
-                    <path id="secondary" d="M21,5V9H3V5A1,1,0,0,1,4,4H20A1,1,0,0,1,21,5ZM17,3V5M12,3V5M7,3V5" style="fill: none; stroke: rgb(253, 167, 105); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
-                </svg>
+    <path id="primary" d="M21,19l-2,2V19ZM20,4H4A1,1,0,0,0,3,5V20a1,1,0,0,0,1,1H19l2-2V5A1,1,0,0,0,20,4Z" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+    <path id="secondary" d="M21,5V9H3V5A1,1,0,0,1,4,4H20A1,1,0,0,1,21,5ZM17,3V5M12,3V5M7,3V5" style="fill: none; stroke: rgb(253, 167, 105); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+</svg>

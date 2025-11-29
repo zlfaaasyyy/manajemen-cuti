@@ -7,8 +7,6 @@
 
     <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
-            
-            <!-- Notifikasi Sukses/Error -->
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
                     {{ session('success') }}
@@ -20,7 +18,6 @@
                 </div>
             @endif
 
-            <!-- 1. Info Divisi Card -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 mb-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 <div class="flex flex-wrap justify-between items-start border-b pb-4 mb-4" style="border-color: #f0f0f0;">
                     <div>
@@ -44,13 +41,11 @@
                 </div>
             </div>
 
-            <!-- 2. Daftar Anggota Card -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 
                 <div class="flex justify-between items-center mb-6 border-b pb-3" style="border-color: #f0f0f0;">
                     <h4 class="text-xl font-extrabold text-stone-800">Daftar Anggota ({{ $divisi->users->count() }} Orang)</h4>
                     
-                    <!-- TOMBOL TAMBAH ANGGOTA (HIJAU LUMUT #ABC270) -->
                     <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'add-member-modal')" 
                             class="px-4 py-2 text-sm font-bold text-white rounded-xl shadow-lg transition flex items-center hover:opacity-90" 
                             style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7); border-radius: 12px;">
@@ -75,7 +70,6 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <!-- Placeholder inisial (Orange Terakota) -->
                                         <div class="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs mr-3" style="background-color: #FDA769;">
                                             {{ substr($member->name, 0, 1) }}
                                         </div>
@@ -93,7 +87,6 @@
                                     {{ $member->kuota_cuti }} Hari
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <!-- Logika Tombol Keluarkan -->
                                     @if($divisi->ketua_divisi_id !== $member->id)
                                         <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'remove-member-{{ $member->id }}')" class="text-red-600 hover:text-red-900 font-bold text-xs bg-red-50 hover:bg-red-100 px-3 py-1 rounded-xl transition duration-150 ease-in-out" style="border-radius: 12px;">
                                             Keluarkan
@@ -104,7 +97,6 @@
                                 </td>
                             </tr>
 
-                            <!-- MODAL KONFIRMASI KELUARKAN MEMBER -->
                             <x-modal name="remove-member-{{ $member->id }}" focusable>
                                 <form method="POST" action="{{ route('divisi.removeMember', $member->id) }}" class="p-6">
                                     @csrf
@@ -141,7 +133,6 @@
                 </div>
             </div>
 
-            <!-- MODAL TAMBAH ANGGOTA -->
             <x-modal name="add-member-modal" focusable>
                 <form method="POST" action="{{ route('divisi.addMember', $divisi->id) }}" class="p-6">
                     @csrf
@@ -175,7 +166,6 @@
                 </form>
             </x-modal>
 
-            <!-- MODAL KONFIRMASI HAPUS DIVISI -->
             <x-modal name="delete-divisi-{{ $divisi->id }}" focusable>
                 <form method="POST" action="{{ route('divisi.destroy', $divisi->id) }}" class="p-6">
                     @csrf

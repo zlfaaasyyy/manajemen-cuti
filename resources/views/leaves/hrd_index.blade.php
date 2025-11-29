@@ -5,7 +5,6 @@
         </h2>
     </x-slot>
 
-    <!-- Alpine Data untuk Bulk Action -->
     <div class="py-12" style="background-color: #F8F8F8;" x-data="{
         selected: [],
         selectAll: false,
@@ -19,7 +18,7 @@
             }
         }
     }">
-        <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8 pb-20"> <!-- Tambah padding bottom agar tidak tertutup toolbar -->
+        <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8 pb-20"> 
             
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
@@ -32,7 +31,6 @@
                 </div>
             @endif
 
-            <!-- HEADER LIST & CHECKBOX SELECT ALL -->
             <div class="flex justify-between items-end mb-6">
                 <div>
                     <h3 class="text-xl font-extrabold text-stone-800">
@@ -42,7 +40,6 @@
                         </span>
                     </h3>
                     
-                    <!-- Checkbox Select All -->
                     <div class="mt-4 flex items-center">
                         <input type="checkbox" id="select-all" x-model="selectAll" @click="toggleAll()" 
                                class="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
@@ -53,19 +50,16 @@
                 </div>
             </div>
 
-            <!-- GRID KARTU PENGAJUAN -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @forelse($pendingRequests as $request)
                 <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] border border-gray-100 flex flex-col transition hover:shadow-3xl duration-300 relative"
                      style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-radius: 24px;">
                     
-                    <!-- CHECKBOX INDIVIDU (Pojok Kiri Atas) -->
                     <div class="absolute top-4 left-4 z-10">
                         <input type="checkbox" value="{{ $request->id }}" x-model="selected"
                                class="w-6 h-6 text-amber-600 border-gray-300 rounded focus:ring-amber-500 shadow-md">
                     </div>
 
-                    <!-- Label Asal Pengajuan (Pojok Kanan Atas) -->
                     <div class="absolute top-3 right-3">
                         @if($request->status == 'approved_leader')
                             <span class="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-200 shadow-sm" style="background-color: #FFFBE8;">
@@ -78,7 +72,6 @@
                         @endif
                     </div>
 
-                    <!-- INFO USER -->
                     <div class="p-5 flex items-center space-x-4 border-b mt-8" style="background-color: #F8F8F8; border-color: #F0F0F0;">
                         <div class="flex-shrink-0">
                             @if($request->user->foto_profil)
@@ -95,7 +88,6 @@
                         </div>
                     </div>
 
-                    <!-- Detail Cuti -->
                     <div class="p-5 flex-1 flex flex-col">
                         <div class="flex justify-between items-center mb-3">
                             <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border 
@@ -119,7 +111,6 @@
                         </div>
                     </div>
 
-                    <!-- Tombol Aksi Individual -->
                     <div class="p-5 border-t" style="border-color: #F0F0F0; background-color: #F8F8F8;">
                         <div class="grid grid-cols-2 gap-3">
                             <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'hrd-reject-modal-{{ $request->id }}')" 
@@ -134,7 +125,6 @@
                     </div>
                 </div>
 
-                <!-- MODAL INDIVIDUAL -->
                 <x-modal name="hrd-approve-modal-{{ $request->id }}" focusable>
                     <form method="POST" action="{{ route('hrd.leaves.action', $request->id) }}" class="p-6">
                         @csrf
@@ -168,7 +158,6 @@
                 @endforelse
             </div>
 
-            <!-- TOOLBAR BULK ACTION (Fixed Bottom) -->
             <div x-show="selected.length > 0" 
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-y-10"
@@ -187,7 +176,6 @@
                 </div>
             </div>
 
-            <!-- MODAL BULK APPROVE -->
             <x-modal name="bulk-approve-modal" focusable>
                 <form method="POST" action="{{ route('hrd.leaves.bulk_action') }}" class="p-6">
                     @csrf
@@ -205,7 +193,6 @@
                 </form>
             </x-modal>
 
-            <!-- MODAL BULK REJECT -->
             <x-modal name="bulk-reject-modal" focusable>
                 <form method="POST" action="{{ route('hrd.leaves.bulk_action') }}" class="p-6">
                     @csrf

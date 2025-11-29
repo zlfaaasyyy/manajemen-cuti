@@ -6,10 +6,8 @@
     </x-slot>
 
     <div class="py-12" style="background-color: #F8F8F8;">
-        <!-- LEBAR KONTEN MENYESUAIKAN DESKTOP -->
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             
-            <!-- Error Handling Global -->
             @if ($errors->any())
                 <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 shadow-md rounded-lg">
                     <p class="font-bold">Gagal Mengirim Pengajuan:</p>
@@ -21,12 +19,10 @@
                 </div>
             @endif
 
-            <!-- MAIN CARD (Aesthetic Baru + Sudut Melengkung + Shadow Kuat) -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.15);">
                 <form action="{{ route('leaves.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    <!-- HEADER INFO (Hijau Lumut - ABC270) -->
                     <div class="flex items-center justify-between mb-8 p-4 rounded-xl" style="background-color: #ABC270; color: #473C33;">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-widest">Tanggal Pengajuan</p>
@@ -38,7 +34,6 @@
                         </div>
                     </div>
 
-                    <!-- 1. JENIS CUTI -->
                     <div class="mb-5">
                         <label class="block text-sm font-bold mb-2 text-stone-800">Jenis Cuti <span class="text-red-500">*</span></label>
                         <select name="jenis_cuti" id="jenis_cuti" 
@@ -49,7 +44,6 @@
                         </select>
                     </div>
 
-                    <!-- 2. DATE PICKER (Range) -->
                     <div class="grid grid-cols-2 gap-4 mb-2">
                         <div>
                             <label class="block text-sm font-bold mb-2 text-stone-800">Tanggal Mulai <span class="text-red-500">*</span></label>
@@ -65,7 +59,6 @@
                         </div>
                     </div>
 
-                    <!-- CALCULATION RESULT (FEC868 - Kuning Muda) -->
                     <div class="mb-6 flex items-center p-3 rounded-xl border" style="background-color: #FFFBE8; border-color: #FEC868;">
                         <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <p class="text-sm font-bold text-amber-800">
@@ -74,14 +67,12 @@
                         <p id="error_msg" class="text-xs text-red-600 ml-auto hidden font-bold"></p>
                     </div>
 
-                    <!-- 3. ALASAN -->
                     <div class="mb-5">
                         <label class="block text-sm font-bold mb-2 text-stone-800">Alasan Cuti <span class="text-red-500">*</span></label>
                         <textarea name="alasan" class="w-full border-gray-300 rounded-xl shadow-sm focus:border-amber-500 focus:ring-amber-500 text-stone-700" 
                                   rows="3" required placeholder="Jelaskan alasan pengajuan cuti Anda..." style="border-radius: 12px; border-color: #f0f0f0;">{{ old('alasan') }}</textarea>
                     </div>
 
-                    <!-- 4. ALAMAT & KONTAK DARURAT -->
                     <div class="grid grid-cols-2 gap-4 mb-5">
                         <div>
                             <label class="block text-sm font-bold mb-2 text-stone-800">Alamat Selama Cuti <span class="text-red-500">*</span></label>
@@ -97,7 +88,6 @@
                         </div>
                     </div>
 
-                    <!-- 5. UPLOAD SURAT DOKTER (Conditional) -->
                     <div class="mb-8 hidden" id="upload_surat">
                         <label class="block text-sm font-bold mb-2 text-stone-800">
                             Upload Surat Keterangan Dokter <span class="text-red-500">*</span>
@@ -116,19 +106,13 @@
                         </div> 
                     </div>
 
-                    <!-- TOMBOL AKSI (Submit, Reset, Cancel) -->
                     <div class="flex items-center justify-end space-x-3 border-t pt-6" style="border-color: #f0f0f0;">
-                        <!-- Tombol Cancel -->
                         <a href="{{ route('dashboard') }}" class="px-5 py-2.5 text-sm font-medium text-stone-800 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition" style="border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             Cancel
                         </a>
-
-                        <!-- Tombol Reset -->
                         <button type="reset" class="px-5 py-2.5 text-sm font-medium text-stone-800 bg-amber-200 rounded-xl hover:bg-amber-300 focus:ring-4 focus:outline-none focus:ring-amber-100 transition" style="border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             Reset
                         </button>
-
-                        <!-- Tombol Submit (FDA769 - Orange Terakota) -->
                         <button type="submit" id="submit_btn" 
                                 class="px-6 py-3 text-sm font-bold text-white rounded-xl shadow-lg transition" 
                                 style="background-color: #FDA769; box-shadow: 0 6px 12px -2px rgba(253, 167, 105, 0.5); border: none; font-size: 15px;">
@@ -140,7 +124,6 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC (Sama seperti sebelumnya) -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             cekJenisCuti();

@@ -6,14 +6,11 @@
     </x-slot>
 
     <div class="py-12" style="background-color: #F8F8F8;">
-        <!-- Container Lebar untuk form -->
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <!-- Main Card -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 
                 <h3 class="text-2xl font-extrabold text-stone-800 mb-6">Informasi Akun Karyawan</h3>
                 
-                <!-- Error Handling -->
                 @if ($errors->any())
                     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-6 shadow-sm">
                         <ul>
@@ -24,20 +21,17 @@
                     </div>
                 @endif
                 
-                <!-- Tambahkan x-data di sini -->
                 <form action="{{ route('users.store') }}" method="POST" x-data="{ role: '{{ old('role', 'user') }}' }">
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
-                        <!-- NAMA LENGKAP -->
                         <div>
                             <label for="name" class="block text-sm font-bold mb-2 text-stone-800">Nama Lengkap</label>
                             <input type="text" name="name" id="name" value="{{ old('name') }}" required autofocus 
                                    class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                         </div>
 
-                        <!-- USERNAME -->
                         <div>
                             <label for="username" class="block text-sm font-bold mb-2 text-stone-800">Username</label>
                             <input type="text" name="username" id="username" value="{{ old('username') }}" required 
@@ -45,14 +39,12 @@
                             @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
 
-                        <!-- EMAIL -->
                         <div>
                             <label for="email" class="block text-sm font-bold mb-2 text-stone-800">Email</label>
                             <input type="email" name="email" id="email" value="{{ old('email') }}" required 
                                    class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                         </div>
                         
-                        <!-- ROLE -->
                         <div>
                             <label for="role" class="block text-sm font-bold mb-2 text-stone-800">Role / Jabatan</label>
                             <select name="role" id="role" required x-model="role"
@@ -65,20 +57,16 @@
                             </select>
                         </div>
 
-                        <!-- DIVISI (Hanya muncul jika Role = ketua_divisi atau user) -->
                         <div x-show="role === 'ketua_divisi' || role === 'user'" class="transition-all duration-300">
                             <label for="divisi_id" class="block text-sm font-bold mb-2 text-stone-800">Divisi</label>
                             <select name="divisi_id" id="divisi_id" 
                                     class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
-                                
-                                {{-- PERBAIKAN LOGIKA: Opsi NULL menjadi Opsional untuk semua role User/Ketua --}}
                                 <option value="" {{ old('divisi_id') === null ? 'selected' : '' }}>
                                     -- Pilih Divisi (Opsional) --
                                 </option>
                                 
                                 @foreach($divisis as $divisi)
                                     @php
-                                        // Variabel PHP untuk status Divisi
                                         $isOccupied = $divisi->ketua_divisi_id ? 'true' : 'false';
                                         $isCurrentValue = old('divisi_id') == $divisi->id ? 'true' : 'false';
                                     @endphp
@@ -86,10 +74,8 @@
                                     <option value="{{ $divisi->id }}" 
                                             {{ $isCurrentValue === 'true' ? 'selected' : '' }}
                                             
-                                            {{-- LOGIKA FILTER UTAMA: HIDE jika Role=Ketua Divisi DAN Divisi sudah terisi --}}
                                             x-bind:hidden="role === 'ketua_divisi' && {{ $isOccupied }} && !{{ $isCurrentValue }}"
                                             
-                                            {{-- Nonaktifkan opsi jika: Role bukan Ketua Divisi TAPI Divisi sudah terisi (Ini hanya berlaku jika user berganti role dari user ke user, agar tidak salah pilih divisi berketua) --}}
                                             x-bind:disabled="role !== 'ketua_divisi' && {{ $isOccupied }}"
                                             >
                                         {{ $divisi->nama }} 
@@ -103,7 +89,6 @@
                             <p x-show="role === 'user'" class="text-xs text-gray-500 mt-1">Pilih Divisi, atau biarkan kosong jika belum ditentukan.</p>
                         </div>
                         
-                        <!-- KUOTA CUTI (Hanya muncul jika Role = user atau ketua_divisi) -->
                         <div x-show="role === 'user' || role === 'ketua_divisi'" class="transition-all duration-300">
                             <label for="kuota_cuti" class="block text-sm font-bold mb-2 text-stone-800">Kuota Cuti (Hari)</label>
                             <input type="number" name="kuota_cuti" id="kuota_cuti" value="{{ old('kuota_cuti', 12) }}" min="0" 
@@ -111,7 +96,6 @@
                             <p class="text-xs text-gray-500 mt-1">Default 12 hari untuk User/Ketua.</p>
                         </div>
                         
-                        <!-- PASSWORD -->
                         <div class="md:col-span-2 border-t pt-6 mt-4" style="border-color: #f0f0f0;">
                             <p class="text-sm font-bold text-stone-800 mb-4">Set Password Awal</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -129,8 +113,6 @@
                         </div>
                     </div>
 
-                    
-                    <!-- TOMBOL AKSI (Submit - HIJAU LUMUT #ABC270) -->
                     <div class="mt-8 flex justify-end space-x-3 border-t pt-6" style="border-color: #f0f0f0;">
                         <a href="{{ route('users.index') }}" class="px-5 py-2.5 text-sm font-medium text-stone-800 bg-gray-50 border border-gray-300 rounded-xl hover:bg-gray-100 transition" style="border-radius: 12px;">
                             Batal

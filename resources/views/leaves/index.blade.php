@@ -6,16 +6,13 @@
     </x-slot>
 
     <div class="py-12" style="background-color: #F8F8F8;">
-        <!-- Container Lebar -->
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
             
-            <!-- FILTER SECTION (Card Berbentuk Modern) -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[24px] p-6 mb-8 border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
                 <h3 class="font-extrabold text-lg text-stone-800 mb-4">Filter Riwayat</h3>
                 
                 <form method="GET" action="{{ route('leaves.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
                     
-                    <!-- Filter Jenis -->
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Jenis Cuti</label>
                         <select name="jenis_cuti" class="w-full border-gray-300 rounded-xl shadow-sm text-stone-700 py-2.5 text-sm" style="border-radius: 12px; border-color: #f0f0f0;">
@@ -25,7 +22,6 @@
                         </select>
                     </div>
 
-                    <!-- Filter Status -->
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
                         <select name="status" class="w-full border-gray-300 rounded-xl shadow-sm text-stone-700 py-2.5 text-sm" style="border-radius: 12px; border-color: #f0f0f0;">
@@ -38,13 +34,11 @@
                         </select>
                     </div>
 
-                    <!-- Filter Tanggal Pengajuan -->
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Tgl Pengajuan</label>
                         <input type="date" name="tgl_pengajuan" value="{{ request('tgl_pengajuan') }}" class="w-full border-gray-300 rounded-xl shadow-sm text-stone-700 py-2.5 text-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                     </div>
 
-                    <!-- Filter Bulan -->
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Periode Bulan</label>
                         <select name="bulan" class="w-full border-gray-300 rounded-xl shadow-sm text-stone-700 py-2.5 text-sm" style="border-radius: 12px; border-color: #f0f0f0;">
@@ -55,7 +49,6 @@
                         </select>
                     </div>
 
-                    <!-- Filter Tahun -->
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Periode Tahun</label>
                         <select name="tahun" class="w-full border-gray-300 rounded-xl shadow-sm text-stone-700 py-2.5 text-sm" style="border-radius: 12px; border-color: #f0f0f0;">
@@ -66,7 +59,6 @@
                         </select>
                     </div>
 
-                    <!-- Tombol Filter (ORANGE TERAKOTA #FDA769) -->
                     <div class="lg:col-span-1">
                         <button type="submit" 
                                 class="text-white w-full px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:opacity-90 transition"
@@ -78,7 +70,6 @@
                 </form>
             </div>
 
-            <!-- TABEL DATA (Card Berbentuk Modern) -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 <h3 class="font-extrabold text-xl mb-4 text-stone-800">Riwayat Pengajuan</h3>
                 <div class="overflow-x-auto">

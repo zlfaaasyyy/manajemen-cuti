@@ -7,8 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
-            
-            <!-- Notifikasi Sukses/Error -->
+
             @if(session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-sm flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -16,9 +15,6 @@
                 </div>
             @endif
 
-            <!-- ============================================= -->
-            <!-- TABEL 1: KARYAWAN SEDANG CUTI -->
-            <!-- ============================================= -->
             @if($usersOnLeave->count() > 0)
             <div class="bg-white overflow-hidden shadow-xl rounded-[30px] border border-gray-100">
                 <div class="p-8 bg-white border-b border-gray-100">
@@ -90,9 +86,6 @@
             </div>
             @endif
 
-            <!-- ============================================= -->
-            <!-- TABEL 2: DAFTAR PENGGUNA AKTIF -->
-            <!-- ============================================= -->
             <div class="bg-white overflow-hidden shadow-xl rounded-[30px] border border-gray-100">
                 <div class="p-8 bg-white border-b border-gray-100">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -148,7 +141,6 @@
                                         {{ $user->divisi->nama ?? '-' }}
                                     </td>
                                     
-                                    <!-- LOGIKA TAMPILAN KUOTA: Admin/HRD = Strip (-) -->
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-800 font-bold">
                                         @if($user->role == 'user' || $user->role == 'ketua_divisi')
                                             <span class="{{ $user->kuota_cuti == 0 ? 'text-red-500' : 'text-green-600' }}">
@@ -165,7 +157,6 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                             </a>
                                             
-                                            <!-- Tombol Hapus - DENGAN KONDISI BARU -->
                                             @if(auth()->user()->role === 'admin' && auth()->id() !== $user->id && $user->role !== 'hrd')
                                             <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->name }}?');">
                                                 @csrf

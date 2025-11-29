@@ -8,7 +8,6 @@
     <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
             
-            <!-- Pesan Sukses -->
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -16,7 +15,6 @@
                 </div>
             @endif
 
-            <!-- Header Statistik -->
             <div class="mb-6 flex items-center justify-between">
                 <h3 class="text-xl font-extrabold text-stone-800">
                     Menunggu Persetujuan: 
@@ -26,14 +24,10 @@
                 </h3>
             </div>
 
-            <!-- GRID CARD LAYOUT -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @forelse($pendingRequests as $request)
                 <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] border border-gray-100 flex flex-col transition hover:shadow-3xl duration-300" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
-                    
-                    <!-- Bagian Atas: Info User (Warna Aksen #473C33) -->
                     <div class="p-5 flex items-center space-x-4 border-b" style="background-color: #F8F8F8; border-color: #F0F0F0;">
-                        <!-- Foto Profil (Warna Aksen #ABC270) -->
                         <div class="flex-shrink-0">
                             @if($request->user->foto_profil)
                                 <img class="h-14 w-14 rounded-full object-cover border-2 border-white shadow-sm" src="{{ Storage::url($request->user->foto_profil) }}" alt="{{ $request->user->name }}">
@@ -50,10 +44,8 @@
                         </div>
                     </div>
 
-                    <!-- Bagian Tengah: Detail Cuti -->
                     <div class="p-5 flex-1 flex flex-col">
                         <div class="flex justify-between items-center mb-3">
-                            <!-- Jenis Cuti -->
                             <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border 
                                 {{ $request->jenis_cuti == 'sakit' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200' }}"
                                 style="{{ $request->jenis_cuti == 'tahunan' ? 'background-color: #ECF2E1; color: #ABC270; border-color: #ABC270;' : '' }}">
@@ -62,7 +54,6 @@
                             <span class="text-sm font-extrabold text-stone-800">{{ $request->total_hari }} Hari Kerja</span>
                         </div>
                         
-                        <!-- Periode Cuti (Warna Sekunder #FEC868) -->
                         <div class="mb-4 text-sm text-gray-600 p-3 rounded-xl border border-amber-200" style="background-color: #FFFBE8;">
                             <div class="flex justify-between mb-1">
                                 <span class="text-xs text-gray-500">Periode:</span>
@@ -75,7 +66,6 @@
                             "{{ Str::limit($request->alasan, 100) }}"
                         </div>
 
-                        <!-- Link Surat Dokter -->
                         @if($request->jenis_cuti == 'sakit' && $request->bukti_sakit)
                             <a href="{{ Storage::url($request->bukti_sakit) }}" target="_blank" class="inline-flex items-center text-xs font-bold text-orange-600 hover:text-orange-800 hover:underline mt-auto">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
@@ -84,17 +74,14 @@
                         @endif
                     </div>
 
-                    <!-- Bagian Bawah: Tombol Aksi -->
                     <div class="p-5 border-t" style="border-color: #F0F0F0; background-color: #F8F8F8;">
                         <div class="grid grid-cols-2 gap-3">
-                            <!-- Tombol Reject -->
                             <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'reject-modal-{{ $request->id }}')" 
                                 class="w-full py-3 px-4 bg-white border border-red-500 text-red-600 rounded-xl hover:bg-red-50 transition text-sm font-bold flex justify-center items-center group shadow-md" style="border-radius: 12px;">
                                 <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 Tolak
                             </button>
 
-                            <!-- Tombol Approve (HIJAU LUMUT #ABC270) -->
                             <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'approve-modal-{{ $request->id }}')" 
                                 class="w-full py-3 px-4 text-white rounded-xl transition text-sm font-bold shadow-lg flex justify-center items-center group" style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7); border-radius: 12px;">
                                 <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -104,7 +91,6 @@
                     </div>
                 </div>
 
-                <!-- ================= MODAL APPROVE (Catatan Opsional) ================= -->
                 <x-modal name="approve-modal-{{ $request->id }}" focusable>
                     <form method="POST" action="{{ route('leader.leaves.action', $request->id) }}" class="p-6">
                         @csrf
@@ -132,7 +118,6 @@
                     </form>
                 </x-modal>
 
-                <!-- ================= MODAL REJECT (Alasan Wajib) ================= -->
                 <x-modal name="reject-modal-{{ $request->id }}" focusable>
                     <form method="POST" action="{{ route('leader.leaves.action', $request->id) }}" class="p-6">
                         @csrf

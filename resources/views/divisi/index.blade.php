@@ -6,9 +6,7 @@
     </x-slot>
 
     <div class="py-12" style="background-color: #F8F8F8;">
-        <!-- Container Lebar -->
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
-            
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
                     {{ session('success') }}
@@ -20,10 +18,7 @@
                 </div>
             @endif
 
-            <!-- MAIN CARD: Tabel Data -->
-            <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
-                
-                <!-- TOOLBAR: Tombol Tambah -->
+            <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">                
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-extrabold text-xl text-stone-800">Daftar Divisi Aktif</h3>
                     <a href="{{ route('divisi.create') }}" 
@@ -33,8 +28,6 @@
                         Tambah Divisi
                     </a>
                 </div>
-
-                <!-- TABEL DATA -->
                
                 <div class="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
 
@@ -49,7 +42,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            {{-- PERBAIKAN: Menggunakan $divisis dari controller --}}
                             @forelse($divisis as $divisi)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-stone-800">
@@ -58,7 +50,6 @@
                                     </a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{-- PERBAIKAN: Menggunakan relasi ketuaDivisi --}}
                                     {{ $divisi->ketuaDivisi->name ?? 'Belum Ditunjuk' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-800">
@@ -67,20 +58,14 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <!-- Tombol Detail (Orange) -->
                                     <a href="{{ route('divisi.show', $divisi->id) }}" class="text-amber-600 hover:text-amber-800 font-bold">Detail</a>
-                                    
-                                    <!-- Tombol Edit (Biru) -->
                                     <a href="{{ route('divisi.edit', $divisi->id) }}" class="text-blue-600 hover:text-blue-800 font-bold">Edit</a>
-                                    
-                                    <!-- Tombol Hapus (Merah) -->
                                     <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'delete-divisi-{{ $divisi->id }}')" class="text-red-600 hover:text-red-800 font-bold">
                                         Hapus
                                     </button>
                                 </td>
                             </tr>
 
-                            <!-- MODAL KONFIRMASI HAPUS -->
                             <x-modal name="delete-divisi-{{ $divisi->id }}" focusable>
                                 <form method="POST" action="{{ route('divisi.destroy', $divisi->id) }}" class="p-6">
                                     @csrf
