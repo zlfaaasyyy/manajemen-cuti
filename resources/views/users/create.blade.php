@@ -24,11 +24,15 @@
                     </div>
                 @endif
                 
-                <form action="{{ route('users.store') }}" method="POST">
+                <!-- Tambahkan x-data di sini -->
+                <form action="{{ route('users.store') }}" method="POST" x-data="{ role: 'user' }">
                     @csrf
 
                     <!-- SECTION 1: DATA DASAR AKUN -->
-                    <p class="text-sm font-bold text-gray-500 mb-3 border-b pb-2" style="border-color: #f0f0f0;">Data Login & Personal</p>
+                    <div class="border-b pb-4 mb-6" style="border-color: #f0f0f0;">
+                        <p class="text-sm font-bold text-gray-500">Data Login & Personal</p>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         
                         <!-- NAMA -->
@@ -57,20 +61,28 @@
                     </div>
                     
                     <!-- SECTION 2: ROLE & DIVISI -->
-                    <p class="text-sm font-bold text-gray-500 mb-3 border-b pb-2" style="border-color: #f0f0f0;">Penugasan & Kuota Cuti</p>
+                    <div class="border-b pb-4 mb-6" style="border-color: #f0f0f0;">
+                        <p class="text-sm font-bold text-gray-500">Penugasan & Kuota Cuti</p>
+                    </div>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <!-- ROLE -->
                         <div>
                             <label class="block text-sm font-bold mb-2 text-stone-800">Role</label>
-                            <select name="role" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 capitalize focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
+                            <!-- Tambahkan x-model -->
+                            <select name="role" id="role" x-model="role" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 capitalize focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
                                 @foreach($roles as $role)
                                     <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
                                         {{ str_replace('_', ' ', $role) }}
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-red-500 mt-1">Pastikan HRD hanya ada 1.</p>
+                            
+                            <!-- Pesan bantuan dinamis -->
+                            <p class="text-xs text-gray-400 mt-1 italic" x-show="role === 'admin' || role === 'hrd'" style="display: none;">
+                                *Admin/HRD tidak butuh kuota.
+                            </p>
                         </div>
 
                         <!-- DIVISI -->
@@ -87,8 +99,8 @@
                             <p class="text-xs text-gray-500 mt-1">Jika Role Ketua, Divisi harus dipilih & belum ada Ketua.</p>
                         </div>
                         
-                        <!-- KUOTA CUTI -->
-                        <div>
+                        <!-- KUOTA CUTI (Tambahkan x-show) -->
+                        <div x-show="role === 'user' || role === 'ketua_divisi'" x-transition>
                             <label class="block text-sm font-bold mb-2 text-stone-800">Kuota Cuti (Hari)</label>
                             <input type="number" name="kuota_cuti" value="{{ old('kuota_cuti', 12) }}" min="0" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                             <p class="text-xs text-gray-500 mt-1">Default 12 hari untuk User/Ketua.</p>

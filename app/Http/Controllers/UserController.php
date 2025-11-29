@@ -7,27 +7,55 @@ use App\Models\Divisi;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('divisi')->orderBy('name')->get();
-        return view('users.index', compact('users'));
+        $now = Carbon::now();
+
+        // Ambil User yang SEDANG CUTI
+        $usersOnLeave = User::whereIn('role', ['user', 'ketua_divisi'])
+            ->whereHas('leaveRequests', function($q) use ($now) {
+                $q->where('status', 'approved')
+                  ->whereDate('tanggal_mulai', '<=', $now)
+                  ->whereDate('tanggal_selesai', '>=', $now);
+            })->with(['divisi', 'leaveRequests' => function($q) use ($now) {
+                $q->where('status', 'approved')
+                  ->whereDate('tanggal_mulai', '<=', $now)
+                  ->whereDate('tanggal_selesai', '>=', $now);
+            }])->get();
+
+        $onLeaveIds = $usersOnLeave->pluck('id')->toArray();
+
+        // Ambil User AKTIF (Sisanya)
+        $users = User::whereNotIn('id', $onLeaveIds)
+            ->with('divisi')
+            ->orderBy('name', 'asc')
+            ->paginate(10); 
+
+        return view('users.index', compact('users', 'usersOnLeave'));
     }
 
     public function create()
     {
         $divisis = Divisi::all();
         
-        // 1. Base Role (Tanpa Admin)
-        $roles = ['ketua_divisi', 'user'];
+        // LOGIKA FILTER ROLE:
+        $roles = ['ketua_divisi', 'user']; 
 
-        // 2. Cek apakah posisi HRD sudah terisi?
+        // Cek apakah slot HRD masih kosong?
         if (!User::where('role', 'hrd')->exists()) {
-            array_unshift($roles, 'hrd'); // Masukkan ke urutan awal
+            array_unshift($roles, 'hrd'); 
         }
-        
+
+        // Cek apakah slot Admin masih kosong?
+        if (!User::where('role', 'admin')->exists()) {
+            array_unshift($roles, 'admin'); 
+        }
+
         return view('users.create', compact('divisis', 'roles'));
     }
 
@@ -36,34 +64,29 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
             'divisi_id' => [
                 'nullable', 
-                'exists:divisis,id',
-                // VALIDASI BARU: Jika user adalah Ketua Divisi, pastikan Divisi tsb belum punya Ketua lain
+                'exists:divisis,id', 
                 Rule::when($request->role === 'ketua_divisi', [
-                    // Cek apakah Divisi yang dipilih (jika ada) sudah punya ketuaDivisi_id yang terisi
                     function ($attribute, $value, $fail) {
                         if ($value) {
                             $divisi = Divisi::find($value);
-                            // Cek jika Divisi sudah punya ketua, maka ini tidak boleh
                             if ($divisi->ketua_divisi_id !== null) {
-                                $fail('Divisi ini sudah memiliki Ketua. Pilih Divisi lain atau kosongkan.');
+                                $fail('Divisi ini sudah memiliki Ketua.');
                             }
                         }
                     }
                 ])
             ],
-            'kuota_cuti' => 'nullable|integer|min:0',
+            'kuota_cuti' => [
+                Rule::requiredIf(in_array($request->role, ['user', 'ketua_divisi'])), 
+                'nullable', 'integer', 'min:0'
+            ],
         ]);
 
-        $kuota = $request->kuota_cuti;
-        if ($request->role === 'hrd' || $request->role === 'admin') {
-            $kuota = 0;
-        } elseif ($kuota === null) {
-            $kuota = 12;
-        }
+        $kuota = in_array($request->role, ['admin', 'hrd']) ? 0 : ($request->kuota_cuti ?? 12);
 
         $user = User::create([
             'name' => $request->name,
@@ -74,34 +97,35 @@ class UserController extends Controller
             'kuota_cuti' => $kuota,
         ]);
 
-        // Tambahan Logika: Jika role adalah Ketua Divisi dan Divisi dipilih, update kolom Ketua Divisi di tabel Divisi
         if ($request->role === 'ketua_divisi' && $request->divisi_id) {
             Divisi::where('id', $request->divisi_id)->update(['ketua_divisi_id' => $user->id]);
         }
 
-        return redirect()->route('users.index')->with('success', 'User baru berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function edit(User $user)
     {
-        $divisi = Divisi::all();
-        
-        // 1. Base Role (Tanpa Admin)
+        $divisis = Divisi::all(); 
         $roles = ['ketua_divisi', 'user'];
 
-        // 2. Logika HRD Cerdas untuk Edit:
-        $hrdLainExists = User::where('role', 'hrd')->where('id', '!=', $user->id)->exists();
-
-        if (!$hrdLainExists) {
+        // Cek slot HRD (Kecuali user ini sendiri adalah HRD)
+        $hrdExists = User::where('role', 'hrd')->where('id', '!=', $user->id)->exists();
+        if (!$hrdExists) {
              array_unshift($roles, 'hrd');
         }
 
-        return view('users.edit', compact('user', 'divisi', 'roles'));
+        // Cek slot Admin (Kecuali user ini sendiri adalah Admin)
+        $adminExists = User::where('role', 'admin')->where('id', '!=', $user->id)->exists();
+        if (!$adminExists) {
+            array_unshift($roles, 'admin');
+        }
+
+        return view('users.edit', compact('user', 'divisis', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
-        // Ambil ID Divisi yang saat ini dipimpin oleh user ini
         $currentManagedDivisiId = $user->divisiKetua->id ?? null;
 
         $request->validate([
@@ -111,70 +135,81 @@ class UserController extends Controller
             'divisi_id' => [
                 'nullable', 
                 'exists:divisis,id',
-                // VALIDASI BARU: Jika user adalah Ketua Divisi, pastikan Divisi tsb belum punya Ketua lain
                 Rule::when($request->role === 'ketua_divisi', [
-                    function ($attribute, $value, $fail) use ($user, $currentManagedDivisiId) {
+                    function ($attribute, $value, $fail) use ($user) {
                         if ($value) {
                             $divisi = Divisi::find($value);
-                            // Cek jika Divisi yang dipilih sudah punya ketua yang berbeda dengan user yang sedang diedit
+                            // Cek jika divisi sudah punya ketua DAN ketuanya bukan user ini
                             if ($divisi->ketua_divisi_id !== null && $divisi->ketua_divisi_id !== $user->id) {
-                                $fail('Divisi ini sudah memiliki Ketua. Pilih Divisi lain atau kosongkan.');
+                                $fail('Divisi ini sudah memiliki Ketua.');
                             }
                         }
                     }
                 ])
             ],
-            'kuota_cuti' => 'required|integer|min:0',
+            'kuota_cuti' => ['nullable', 'integer', 'min:0'],
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $data = $request->only(['name', 'email', 'role', 'divisi_id', 'kuota_cuti']);
+        $data = $request->only(['name', 'email', 'role', 'divisi_id']);
 
-        // 1. Logika Kuota
-        if ($request->role === 'hrd' || $request->role === 'admin') {
+        // Force Kuota 0 untuk Admin/HRD
+        if (in_array($request->role, ['admin', 'hrd'])) {
             $data['kuota_cuti'] = 0;
+        } else {
+            $data['kuota_cuti'] = $request->kuota_cuti ?? 12;
         }
 
-        // 2. Logika Password
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
         
-        // 3. Logika Update Divisi Ketua
-        // Cek apakah Divisi ID di form berubah atau role berubah menjadi non-ketua
+        // Jika user sebelumnya Ketua Divisi, dan sekarang ganti Divisi atau ganti Role
         if ($user->role === 'ketua_divisi' && $currentManagedDivisiId && $currentManagedDivisiId != $request->divisi_id) {
-            // Hapus status kepemimpinan di Divisi lama
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
         
-        // Update user
         $user->update($data);
 
-        // 4. Update status kepemimpinan di tabel Divisi
+        // Update Divisi baru
         if ($user->role === 'ketua_divisi' && $request->divisi_id) {
-            // Set user ini sebagai ketua di Divisi yang baru dipilih
             Divisi::where('id', $request->divisi_id)->update(['ketua_divisi_id' => $user->id]);
         }
         
-        // 5. Final Check: Jika role diubah menjadi non-ketua, pastikan Divisi yang pernah dia pimpin di-reset
+        // Jika role berubah jadi bukan ketua, hapus kepemilikan
         if ($user->role !== 'ketua_divisi') {
              Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
 
-
-        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
+        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
-        if (auth()->id() === $user->id) return back()->with('error', 'Gagal hapus akun sendiri.');
+        // Rule 1: Cannot delete self
+        if (auth()->id() === $user->id) {
+             return back()->with('error', 'Gagal hapus akun sendiri.');
+        }
+
+        // Rule 2: Cannot delete HRD (karena harus selalu ada dan hanya ada 1 slot)
+        if ($user->role === 'hrd') {
+            return back()->with('error', 'Akun HRD tidak dapat dihapus karena perannya vital dan harus selalu ada.');
+        }
         
-        // Reset Divisi Ketua jika user yang dihapus adalah Ketua Divisi
+        // Rule 3: Cannot delete the only Admin
+        if ($user->role === 'admin') {
+            $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
+            if ($otherAdmins === 0) {
+                 return back()->with('error', 'Akun Admin tidak dapat dihapus karena tidak ada Admin lain yang tersisa.');
+            }
+        }
+
+        // Reset Ketua Divisi relationship if applicable
         if ($user->role === 'ketua_divisi') {
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
         
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User dihapus.');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 }

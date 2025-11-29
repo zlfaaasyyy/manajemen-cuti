@@ -8,27 +8,76 @@
     <div class="py-12">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8 space-y-8">
             
-            {{-- DASHBOARD ADMIN --}}
+            {{-- Tambahkan Banner Selamat Datang yang Jelas --}}
+            {{-- <div class="bg-white p-6 rounded-[30px] shadow-xl border border-gray-100 mb-6">
+                <h3 class="text-2xl font-extrabold text-stone-800">
+                    @if(auth()->user()->role === 'admin')
+                        Selamat Datang, Administrator!
+                    @elseif(auth()->user()->role === 'hrd')
+                        Selamat Datang, Staff HRD!
+                    @else
+                        Selamat Datang, {{ auth()->user()->name }}!
+                    @endif
+                </h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    @if(auth()->user()->role === 'admin')
+                        Kelola data pengguna, divisi, dan pantau performa sistem cuti.
+                    @elseif(auth()->user()->role === 'hrd')
+                        Lakukan verifikasi final dan pantau laporan cuti global.
+                    @else
+                        Siap untuk mengelola cuti Anda?
+                    @endif
+                </p>
+            </div> --}}
+            {{-- Akhir Banner Selamat Datang --}}
+
+            {{-- ============================================= --}}
+            {{-- 1. DASHBOARD ADMIN --}}
+            {{-- ============================================= --}}
             @if(auth()->user()->role === 'admin')
+            <div class="rounded-[24px] shadow-xl p-6 text-white mb-6" style="background-color: #473C33;">
+                <h3 class="text-xl font-extrabold">Selamat Datang, {{ auth()->user()->name }}!</h3>
+                <p class="text-gray-300 text-sm mb-4">Kelola data pengguna, divisi, dan pantau performa sistem.</p>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Stat Cards -->
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+                <!-- Stat Card 1: Total Karyawan (DIPERBARUI) -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #34D399;">
                     <p class="text-gray-500 text-sm">Total Karyawan</p>
                     <h3 class="text-3xl font-extrabold text-stone-800 mt-1">{{ $stats['total_karyawan'] ?? 0 }}</h3>
-                    <p class="text-xs text-green-600 font-bold mt-2">Semua User Aktif</p>
+                    
+                    <!-- Breakdown Status: Aktif vs Cuti -->
+                    <div class="flex items-center space-x-2 mt-3">
+                        <!-- Aktif -->
+                        <div class="flex items-center px-2.5 py-1 rounded-lg bg-green-50 border border-green-100" title="Karyawan Aktif Bekerja Hari Ini">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+                            <span class="text-xs font-bold text-green-700">{{ $stats['karyawan_aktif'] ?? 0 }} Aktif</span>
+                        </div>
+                        
+                        <!-- Cuti -->
+                        <div class="flex items-center px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100" title="Karyawan Sedang Cuti Hari Ini">
+                            <span class="w-2 h-2 bg-amber-500 rounded-full mr-1.5"></span>
+                            <span class="text-xs font-bold text-amber-700">{{ $stats['karyawan_cuti'] ?? 0 }} Cuti</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+
+                <!-- Stat Card 2: Total Divisi -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #292524;">
                     <p class="text-gray-500 text-sm">Total Divisi</p>
                     <h3 class="text-3xl font-extrabold text-stone-800 mt-1">{{ $stats['total_divisi'] ?? 0 }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+
+                <!-- Stat Card 3: Pengajuan Bulan Ini -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #FDA769;">
                     <p class="text-gray-500 text-sm">Pengajuan Bulan Ini</p>
                     <h3 class="text-3xl font-extrabold" style="color: #FDA769;">{{ $stats['pengajuan_bulan_ini'] ?? 0 }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+
+                <!-- Stat Card 4: Pending Approval -->
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #DC2626;">
                     <p class="text-gray-500 text-sm">Pending Approval</p>
                     <h3 class="text-3xl font-extrabold text-red-600">{{ $stats['pending_approval'] ?? 0 }}</h3>
-                    <p class="text-xs text-gray-500 mt-2">Butuh Tindakan</p>
+                    <p class="text-xs text-red-700 mt-2">Butuh Tindakan</p>
                 </div>
             </div>
 
@@ -66,9 +115,9 @@
             @endif
 
 
-            <!-- ============================================= -->
-            <!-- 2. DASHBOARD USER (KARYAWAN) -->
-            <!-- ============================================= -->
+            {{-- ============================================= --}}
+            {{-- 2. DASHBOARD USER (KARYAWAN) --}}
+            {{-- ============================================= --}}
             @if(auth()->user()->role === 'user')
             <!-- Info Divisi & Ketua (Warna Cokelat Gelap) -->
             <div class="rounded-[24px] shadow-xl p-6 text-white mb-6" style="background-color: #473C33;">
@@ -112,9 +161,9 @@
             @endif
 
 
-            <!-- ============================================= -->
-            <!-- 3. DASHBOARD KETUA DIVISI (Tampilan Baru) -->
-            <!-- ============================================= -->
+            {{-- ============================================= --}}
+            {{-- 3. DASHBOARD KETUA DIVISI --}}
+            {{-- ============================================= --}}
             @if(auth()->user()->role === 'ketua_divisi')
             <!-- Info Divisi & Ketua (Warna Cokelat Gelap - Mirip Dashboard User) -->
             <div class="rounded-[24px] shadow-xl p-6 text-white mb-6" style="background-color: #473C33;">
@@ -130,7 +179,7 @@
                         <p class="font-bold text-xl">{{ auth()->user()->kuota_cuti ?? 0 }} Hari</p>
                     </div>
                 </div>
-                <!-- TOMBOL AJUKAN CUTI PRIBADI (PENTING DITAMBAHKAN DI SINI) -->
+                <!-- TOMBOL AJUKAN CUTI PRIBADI -->
                 <div class="mt-4">
                     <a href="{{ route('leaves.create') }}" class="inline-flex items-center px-6 py-2.5 font-bold text-white rounded-xl shadow-lg transition" style="background-color: #FDA769; box-shadow: 0 4px 8px -2px rgba(253, 167, 105, 0.5); border: none; font-size: 14px;">
                         + Ajukan Cuti Pribadi
@@ -138,9 +187,9 @@
                 </div>
             </div>
 
-            <!-- STATISTIK UTAMA (Mirip layout card 3 kolom User) -->
+            <!-- STATISTIK UTAMA -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- PENDING VERIFIKASI (ORANGE TERAKOTA - FDA769) -->
+                <!-- PENDING VERIFIKASI (ORANGE TERAKOTA) -->
                 <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #FDA769;">
                     <p class="text-gray-500 text-sm">Pending Verifikasi Anda</p>
                     <h3 class="text-4xl font-extrabold mt-1" style="color: #FDA769;">{{ $stats['pending_verifikasi'] ?? 0 }} <span class="text-base font-medium text-gray-400">Pengajuan</span></h3>
@@ -148,12 +197,12 @@
                         <a href="{{ route('leader.leaves.index') }}" class="text-xs text-orange-600 hover:underline font-bold mt-2 inline-block">Proses Sekarang &rarr;</a>
                     @endif
                 </div>
-                <!-- TOTAL PENGAJUAN MASUK (HIJAU LUMUT - ABC270) -->
+                <!-- TOTAL PENGAJUAN MASUK (HIJAU LUMUT) -->
                 <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #ABC270;">
                     <p class="text-gray-500 text-sm">Total Pengajuan Divisi</p>
                     <h3 class="text-4xl font-extrabold mt-1" style="color: #ABC270;">{{ $stats['total_masuk'] ?? 0 }} <span class="text-base font-medium text-gray-400">Total</span></h3>
                 </div>
-                 <!-- SEDANG CUTI MINGGU INI (COKELAT GELAP - 473C33) -->
+                 <!-- SEDANG CUTI MINGGU INI (COKELAT GELAP) -->
                 <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #473C33;">
                     <p class="text-gray-500 text-sm">Anggota Cuti Minggu Ini</p>
                     <h3 class="text-4xl font-extrabold text-stone-800 mt-1">{{ isset($extraData['sedang_cuti_minggu_ini']) ? count($extraData['sedang_cuti_minggu_ini']) : 0 }} <span class="text-base font-medium text-gray-400">Orang</span></h3>
@@ -197,7 +246,7 @@
                             @forelse($extraData['sedang_cuti_minggu_ini'] as $userCuti)
                                 <li class="bg-orange-50 p-3 rounded-xl flex justify-between items-center border border-orange-200">
                                     <div class="flex items-center space-x-3">
-                                        <!-- Initial Anggota (Orange Terakota) -->
+                                        <!-- Initial Anggota -->
                                         <div class="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs" style="background-color: #FDA769;">
                                             {{ substr($userCuti->name, 0, 1) }}
                                         </div>
@@ -221,18 +270,22 @@
             @endif
 
 
-            <!-- ============================================= -->
-            <!-- 4. DASHBOARD HRD -->
-            <!-- ============================================= -->
+            {{-- ============================================= --}}
+            {{-- 4. DASHBOARD HRD --}}
+            {{-- ============================================= --}}
             @if(auth()->user()->role === 'hrd')
+            <div class="rounded-[24px] shadow-xl p-6 text-white mb-6" style="background-color: #473C33;">
+                <h3 class="text-xl font-extrabold">Selamat Datang, {{ auth()->user()->name }}!</h3>
+                <p class="text-gray-300 text-sm mb-4">Lakukan verifikasi final dan pantau laporan cuti global.</p>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Pengajuan Bulan Ini -->
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #292524;">
                     <p class="text-gray-500 text-sm">Total Pengajuan Bulan Ini</p>
                     <h3 class="text-3xl font-extrabold text-stone-800 mt-1">{{ $stats['total_bulan_ini'] ?? 0 }}</h3>
                 </div>
                 <!-- Pending Final (ORANGE TERAKOTA) -->
-                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+                <div class="bg-white p-6 rounded-[24px] shadow-xl border border-gray-100" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 6px solid #DC2626;">
                     <p class="text-gray-500 text-sm">Pending Final Approval</p>
                     <h3 class="text-3xl font-extrabold text-red-600 mt-1">{{ $stats['pending_final'] ?? 0 }}</h3>
                     @if(($stats['pending_final'] ?? 0) > 0)
@@ -309,9 +362,10 @@
             @endif
 
 
-            <!-- ============================================= -->
-            <!-- GLOBAL: Riwayat Cuti Terakhir (Muncul di Semua Role) -->
-            <!-- ============================================= -->
+            {{-- ============================================= --}}
+            {{-- RIWAYAT CUTI TERAKHIR (HANYA UNTUK KARYAWAN & KETUA DIVISI) --}}
+            {{-- ============================================= --}}
+            @if(auth()->user()->role === 'user' || auth()->user()->role === 'ketua_divisi')
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 mt-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
                 <h3 class="text-gray-500 uppercase text-xs font-bold mb-4 tracking-widest">Riwayat Pengajuan Terakhir Saya</h3>
                 <div class="overflow-x-auto">
@@ -361,7 +415,8 @@
                     </table>
                 </div>
             </div>
-
+            @endif
+            
         </div>
     </div>
 </x-app-layout>

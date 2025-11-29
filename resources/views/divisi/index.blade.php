@@ -28,15 +28,18 @@
                     <h3 class="font-extrabold text-xl text-stone-800">Daftar Divisi Aktif</h3>
                     <a href="{{ route('divisi.create') }}" 
                         class="px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition flex items-center hover:opacity-90" 
-                        style="background-color: #ABC270; box-shadow: 0 4px 8px -2px rgba(171, 194, 112, 0.7); border: none; font-size: 15px;">
+                        style="background-color: #FDA769; box-shadow: 0 4px 6px rgba(253, 167, 105, 0.4);">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Tambah Divisi
                     </a>
                 </div>
 
                 <!-- TABEL DATA -->
-                <div class="overflow-x-auto">
+               
+                <div class="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
+
                     <table class="min-w-full divide-y divide-gray-200">
+
                         <thead style="background-color: #F8F8F8;">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Divisi</th>
