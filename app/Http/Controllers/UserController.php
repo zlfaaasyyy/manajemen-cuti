@@ -16,7 +16,6 @@ class UserController extends Controller
     {
         $now = Carbon::now();
 
-        // Ambil User yang SEDANG CUTI
         $usersOnLeave = User::whereIn('role', ['user', 'ketua_divisi'])
             ->whereHas('leaveRequests', function($q) use ($now) {
                 $q->where('status', 'approved')
@@ -30,7 +29,6 @@ class UserController extends Controller
 
         $onLeaveIds = $usersOnLeave->pluck('id')->toArray();
 
-        // Ambil User AKTIF (Sisanya)
         $users = User::whereNotIn('id', $onLeaveIds)
             ->with('divisi')
             ->orderBy('name', 'asc')
@@ -43,15 +41,12 @@ class UserController extends Controller
     {
         $divisis = Divisi::all();
         
-        // LOGIKA FILTER ROLE:
         $roles = ['ketua_divisi', 'user']; 
 
-        // Cek apakah slot HRD masih kosong?
         if (!User::where('role', 'hrd')->exists()) {
             array_unshift($roles, 'hrd'); 
         }
 
-        // Cek apakah slot Admin masih kosong?
         if (!User::where('role', 'admin')->exists()) {
             array_unshift($roles, 'admin'); 
         }
@@ -108,14 +103,11 @@ class UserController extends Controller
     {
         $divisis = Divisi::all(); 
         $roles = ['ketua_divisi', 'user'];
-
-        // Cek slot HRD (Kecuali user ini sendiri adalah HRD)
         $hrdExists = User::where('role', 'hrd')->where('id', '!=', $user->id)->exists();
         if (!$hrdExists) {
              array_unshift($roles, 'hrd');
         }
 
-        // Cek slot Admin (Kecuali user ini sendiri adalah Admin)
         $adminExists = User::where('role', 'admin')->where('id', '!=', $user->id)->exists();
         if (!$adminExists) {
             array_unshift($roles, 'admin');
@@ -153,7 +145,6 @@ class UserController extends Controller
 
         $data = $request->only(['name', 'email', 'role', 'divisi_id']);
 
-        // Force Kuota 0 untuk Admin/HRD
         if (in_array($request->role, ['admin', 'hrd'])) {
             $data['kuota_cuti'] = 0;
         } else {
@@ -164,19 +155,16 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
         
-        // Jika user sebelumnya Ketua Divisi, dan sekarang ganti Divisi atau ganti Role
         if ($user->role === 'ketua_divisi' && $currentManagedDivisiId && $currentManagedDivisiId != $request->divisi_id) {
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
         
         $user->update($data);
 
-        // Update Divisi baru
         if ($user->role === 'ketua_divisi' && $request->divisi_id) {
             Divisi::where('id', $request->divisi_id)->update(['ketua_divisi_id' => $user->id]);
         }
         
-        // Jika role berubah jadi bukan ketua, hapus kepemilikan
         if ($user->role !== 'ketua_divisi') {
              Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
@@ -186,17 +174,14 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // Rule 1: Cannot delete self
         if (auth()->id() === $user->id) {
              return back()->with('error', 'Gagal hapus akun sendiri.');
         }
 
-        // Rule 2: Cannot delete HRD (karena harus selalu ada dan hanya ada 1 slot)
         if ($user->role === 'hrd') {
             return back()->with('error', 'Akun HRD tidak dapat dihapus karena perannya vital dan harus selalu ada.');
         }
         
-        // Rule 3: Cannot delete the only Admin
         if ($user->role === 'admin') {
             $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
             if ($otherAdmins === 0) {
@@ -204,7 +189,6 @@ class UserController extends Controller
             }
         }
 
-        // Reset Ketua Divisi relationship if applicable
         if ($user->role === 'ketua_divisi') {
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }

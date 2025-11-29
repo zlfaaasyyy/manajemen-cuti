@@ -13,12 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class LeaveRequestController extends Controller
 {
-    // ... [KODE LAIN TETAP SAMA SEPERTI SEBELUMNYA] ...
-    
-    // Paste kode ini di bagian paling bawah class, SEBELUM kurung kurawal tutup '}'
-    // atau gantikan controller lama Anda sepenuhnya jika bingung posisi pastinya.
-    // Tapi karena file ini panjang, saya akan tulis ulang FULL agar Anda mudah copy-paste.
-
     public function index(Request $request)
     {
         $query = LeaveRequest::where('user_id', Auth::id());
@@ -213,7 +207,6 @@ class LeaveRequestController extends Controller
         return redirect()->route('hrd.leaves.index')->with('success', $msg ?? 'Diproses.');
     }
 
-    // --- FITUR BARU: BULK ACTION HRD ---
     public function hrdBulkAction(Request $request)
     {
         if (Auth::user()->role !== 'hrd') abort(403);
@@ -228,14 +221,12 @@ class LeaveRequestController extends Controller
         $action = $request->bulk_action;
         $catatan = $request->bulk_catatan;
 
-        // Validasi catatan reject massal
         if ($action === 'reject' && (!is_string($catatan) || strlen(trim($catatan)) < 10)) {
             return back()->with('error', 'Untuk penolakan massal, catatan wajib diisi minimal 10 karakter.');
         }
 
         DB::beginTransaction();
         try {
-            // Ambil request yang valid (status approved_leader)
             $requests = LeaveRequest::whereIn('id', $ids)->where('status', 'approved_leader')->get();
             $count = 0;
 
@@ -247,7 +238,6 @@ class LeaveRequestController extends Controller
                         'catatan_hrd' => 'Disetujui Massal (Bulk Action).',
                     ]);
                 } else {
-                    // Refund kuota jika cuti tahunan
                     if ($req->jenis_cuti == 'tahunan') {
                         $req->user->increment('kuota_cuti', $req->total_hari);
                     }

@@ -25,7 +25,6 @@ class DashboardController extends BaseController
         $extraData = []; 
         $riwayatCuti = collect(); 
 
-        // 1. Data Riwayat Cuti Pribadi (Global for View)
         if ($user->role === 'user' || $user->role === 'ketua_divisi') {
             $riwayatCuti = LeaveRequest::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
@@ -33,11 +32,9 @@ class DashboardController extends BaseController
                 ->get();
         }
         
-        // 2. LOGIC ADMIN
         if ($user->role === 'admin') {
             $totalUser = User::count();
             
-            // Hitung User yang SEDANG CUTI HARI INI
             $sedangCuti = User::whereHas('leaveRequests', function(Builder $query) use ($now) {
                 $query->where('status', 'approved')
                       ->whereDate('tanggal_mulai', '<=', $now)
@@ -46,7 +43,6 @@ class DashboardController extends BaseController
 
             $userAktif = $totalUser - $sedangCuti;
 
-            // STATS ADMIN
             $stats['total_karyawan'] = $totalUser;
             $stats['karyawan_aktif'] = $userAktif; 
             $stats['karyawan_cuti'] = $sedangCuti; 
@@ -54,14 +50,12 @@ class DashboardController extends BaseController
             $stats['pengajuan_bulan_ini'] = LeaveRequest::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             $stats['pending_approval'] = LeaveRequest::whereIn('status', ['pending', 'approved_leader'])->count();
             
-            // EXTRA DATA ADMIN: Karyawan Baru (< 1 Tahun)
             $extraData['karyawan_baru'] = User::whereIn('role', ['user', 'ketua_divisi', 'hrd']) 
                 ->where('created_at', '>', $now->copy()->subYear())
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
 
-        // 3. LOGIC USER (KARYAWAN)
         if ($user->role === 'user') {
             $stats['sisa_kuota'] = $user->kuota_cuti;
             $stats['cuti_sakit'] = LeaveRequest::where('user_id', $user->id)->where('jenis_cuti', 'sakit')->count();
@@ -71,7 +65,6 @@ class DashboardController extends BaseController
             $extraData['ketua'] = $user->divisi?->ketuaDivisi;
         }
 
-        // 4. LOGIC KETUA DIVISI
         if ($user->role === 'ketua_divisi') {
             $divisiId = $user->divisiKetua->id ?? null;
             
@@ -98,7 +91,6 @@ class DashboardController extends BaseController
                  }])->get();
         }
 
-        // 5. LOGIC HRD (Fix: Menggunakan $stats dan $extraData global)
         if ($user->role === 'hrd') {
             $stats['total_bulan_ini'] = LeaveRequest::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             
@@ -109,7 +101,6 @@ class DashboardController extends BaseController
 
             $stats['total_divisi'] = Divisi::count();
 
-            // EXTRA DATA HRD: Karyawan Cuti Bulan Ini
             $extraData['cuti_bulan_ini'] = User::whereHas('leaveRequests', function(Builder $q) use ($startOfMonth, $endOfMonth) {
                 $q->where('status', 'approved')
                   ->where(function ($dateQ) use ($startOfMonth, $endOfMonth) {
@@ -118,7 +109,6 @@ class DashboardController extends BaseController
                   });
             })->with('divisi')->get();
 
-            // EXTRA DATA HRD: Daftar Divisi Ringkas
             $extraData['daftar_divisi'] = Divisi::withCount('users')->with('ketuaDivisi')->get();
         }
 

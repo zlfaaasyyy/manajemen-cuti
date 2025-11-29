@@ -9,12 +9,10 @@ use Illuminate\Validation\Rule;
 
 class DivisiController extends Controller
 {
-    // --- FITUR UTAMA: INDEX (LIHAT DATA) ---
     public function index(Request $request)
     {
         $query = Divisi::with('ketuaDivisi')->withCount('users');
 
-        // Filter Pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -25,7 +23,6 @@ class DivisiController extends Controller
             });
         }
 
-        // Filter Sortir
         if ($request->filled('sort')) {
             switch ($request->sort) {
                 case 'nama_asc': $query->orderBy('nama', 'asc'); break;
@@ -38,21 +35,16 @@ class DivisiController extends Controller
             $query->orderBy('nama', 'asc');
         }
 
-        // PERBAIKAN: Mengganti nama variabel pengiriman menjadi $divisis (Jamak)
         $divisis = $query->get();
         return view('divisi.index', compact('divisis')); // Menggunakan $divisis
     }
 
-    // --- FITUR UTAMA: SHOW (DETAIL & ANGGOTA) ---
     public function show(Divisi $divisi)
     {
-        // 1. Ambil Anggota Divisi Ini
         $divisi->load(['users' => function($q) {
             $q->orderBy('name');
         }, 'ketuaDivisi']);
 
-        // 2. Ambil Karyawan (Role User) yang BELUM Punya Divisi
-        // Ini untuk mengisi dropdown "Tambah Anggota"
         $potentialMembers = User::where('role', 'user')
             ->whereNull('divisi_id')
             ->orderBy('name')
@@ -61,7 +53,6 @@ class DivisiController extends Controller
         return view('divisi.show', compact('divisi', 'potentialMembers'));
     }
 
-    // --- FITUR BARU: TAMBAH ANGGOTA ---
     public function addMember(Request $request, Divisi $divisi)
     {
         $request->validate([
@@ -79,14 +70,11 @@ class DivisiController extends Controller
         return back()->with('success', 'Anggota berhasil ditambahkan.');
     }
 
-    // --- FITUR BARU: HAPUS ANGGOTA (KELUARKAN) ---
     public function removeMember(User $user)
     {
         $user->update(['divisi_id' => null]);
         return back()->with('success', 'Anggota berhasil dikeluarkan dari divisi.');
     }
-
-    // --- FITUR CRUD STANDARD (CREATE, STORE, EDIT, UPDATE, DESTROY) ---
 
     public function create()
     {
@@ -106,7 +94,6 @@ class DivisiController extends Controller
 
         $divisi = Divisi::create($request->all());
 
-        // Update user ketua agar masuk divisi ini
         User::find($request->ketua_divisi_id)->update(['divisi_id' => $divisi->id]);
 
         return redirect()->route('divisi.index')->with('success', 'Divisi berhasil dibuat.');
