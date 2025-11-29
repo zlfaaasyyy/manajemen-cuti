@@ -1,59 +1,138 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<p align="center"><a href="#" target="_blank"><img src="https://www.google.com/search?q=https://placehold.co/400x120/473C33/FFFFFF%3Ftext%3DE-LEAVE%2BSYSTEM" alt="E-Leave System Logo"></a></p>
+
+<h1 align="center">Sistem Manajemen Cuti Karyawan</h1>
+<h4 align="center">Dibangun dengan Laravel & Tailwind CSS</h4>
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Laravel-10.x%2B-red.svg" alt="Laravel Version">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/Tailwind%2520CSS-v3-blue.svg" alt="Tailwind CSS">
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/STATUS-Complete-success.svg" alt="Project Status">
+<img src="https://img.shields.io/packagist/l/laravel/framework" alt="License">
 </p>
 
-## About Laravel
+Tentang Sistem (About This Project)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Sistem ini dirancang untuk mendigitalisasi dan menyederhanakan proses pengajuan, verifikasi, dan persetujuan cuti karyawan di lingkungan perusahaan. Tujuannya adalah memastikan alur cuti yang transparan dan akurat, serta memfasilitasi manajemen kuota cuti tahunan.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Sistem ini dibangun di atas Laravel, memanfaatkan fitur-fitur intinya untuk efisiensi pengembangan dan sintaks yang elegan.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Fitur Utama Proyek
 
-## Learning Laravel
+Manajemen Berbasis Role: Mendukung 4 peran: Admin, HRD, Ketua Divisi, dan User.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Perhitungan Kuota: Kuota cuti tahunan (default 12 hari) dikelola dan dikurangi secara realtime setelah cuti disetujui HRD.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Alur Verifikasi Bertingkat: Pengajuan harus disetujui oleh Ketua Divisi, sebelum disetujui final oleh HRD.
 
-## Laravel Sponsors
+Manajemen Master Data: CRUD untuk User dan Divisi.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Peran Pengguna & Hak Akses
 
-### Premium Partners
+Peran
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Deskripsi
 
-## Contributing
+Hak Akses Khusus
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Admin
 
-## Code of Conduct
+Pengelola sistem utama (Superuser).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+CRUD Manajemen User & Divisi. Mengawasi sistem dan laporan global. (Tidak mengajukan cuti)
 
-## Security Vulnerabilities
+HRD
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Bertanggung jawab atas persetujuan final.
 
-## License
+Verifikasi Final (Approve/Reject), Laporan Cuti Global, Daftar Karyawan Cuti Bulan Ini. (Hanya 1 slot & tidak dapat dihapus)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Ketua Divisi
+
+Bertanggung jawab atas verifikasi awal timnya.
+
+Verifikasi Awal (Approve/Reject) untuk anggota tim. Memiliki kuota cuti pribadi.
+
+User (Karyawan)
+
+Karyawan biasa.
+
+Mengajukan cuti, Melihat sisa kuota, Melacak riwayat pengajuan.
+
+🛠️ Instalasi dan Setup
+
+Ikuti langkah-langkah standar instalasi Laravel untuk menjalankan proyek ini di lingkungan lokal Anda.
+
+Persyaratan
+
+PHP >= 8.1
+
+Composer
+
+Node.js & NPM / Yarn
+
+Database (MySQL/MariaDB)
+
+Langkah-langkah
+
+Clone Repository:
+
+git clone [URL_REPOSITORY_ANDA]
+cd nama-folder-proyek
+
+
+Instal Dependensi PHP:
+
+composer install
+
+
+Buat File Environment (.env):
+
+cp .env.example .env
+# Edit file .env dan atur DB_DATABASE, DB_USERNAME, DB_PASSWORD.
+
+
+Generate Application Key & Frontend:
+
+php artisan key:generate
+npm install
+npm run dev
+
+
+Jalankan Migrasi dan Storage Link:
+
+php artisan migrate --seed
+php artisan storage:link # PENTING untuk foto profil
+
+
+Jalankan Server Lokal:
+
+php artisan serve
+
+
+Sistem akan tersedia di http://127.0.0.1:8000.
+
+🔑 Akun Uji Coba
+
+Gunakan kredensial yang Anda sediakan di file seeder:
+
+Role
+
+Email (Contoh)
+
+Password (Contoh)
+
+Admin
+
+admin@app.com
+
+password
+
+HRD
+
+hrd@app.com
+
+password
+
+License
+
+Proyek ini dirilis di bawah lisensi MIT.
