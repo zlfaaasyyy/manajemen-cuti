@@ -25,85 +25,107 @@
                 @endif
                 
                 <!-- Tambahkan x-data di sini -->
-                <form action="{{ route('users.store') }}" method="POST" x-data="{ role: 'user' }">
+                <form action="{{ route('users.store') }}" method="POST" x-data="{ role: '{{ old('role', 'user') }}' }">
                     @csrf
-
-                    <!-- SECTION 1: DATA DASAR AKUN -->
-                    <div class="border-b pb-4 mb-6" style="border-color: #f0f0f0;">
-                        <p class="text-sm font-bold text-gray-500">Data Login & Personal</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
-                        <!-- NAMA -->
+                        <!-- NAMA LENGKAP -->
                         <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Nama Lengkap</label>
-                            <input type="text" name="name" value="{{ old('name') }}" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
+                            <label for="name" class="block text-sm font-bold mb-2 text-stone-800">Nama Lengkap</label>
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" required autofocus 
+                                   class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                         </div>
-                        
+
+                        <!-- USERNAME -->
+                        <div>
+                            <label for="username" class="block text-sm font-bold mb-2 text-stone-800">Username</label>
+                            <input type="text" name="username" id="username" value="{{ old('username') }}" required 
+                                   class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                            @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                        </div>
+
                         <!-- EMAIL -->
                         <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Email (Username)</label>
-                            <input type="email" name="email" value="{{ old('email') }}" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
-                        </div>
-
-                        <!-- PASSWORD -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Password</label>
-                            <input type="password" name="password" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
-                        </div>
-
-                        <!-- KONFIRMASI PASSWORD -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Konfirmasi Password</label>
-                            <input type="password" name="password_confirmation" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
-                        </div>
-                    </div>
-                    
-                    <!-- SECTION 2: ROLE & DIVISI -->
-                    <div class="border-b pb-4 mb-6" style="border-color: #f0f0f0;">
-                        <p class="text-sm font-bold text-gray-500">Penugasan & Kuota Cuti</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                        <!-- ROLE -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Role</label>
-                            <!-- Tambahkan x-model -->
-                            <select name="role" id="role" x-model="role" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 capitalize focus:border-amber-500 focus:ring-amber-500 shadow-sm" required style="border-radius: 12px; border-color: #f0f0f0;">
-                                @foreach($roles as $role)
-                                    <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
-                                        {{ str_replace('_', ' ', $role) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            
-                            <!-- Pesan bantuan dinamis -->
-                            <p class="text-xs text-gray-400 mt-1 italic" x-show="role === 'admin' || role === 'hrd'" style="display: none;">
-                                *Admin/HRD tidak butuh kuota.
-                            </p>
-                        </div>
-
-                        <!-- DIVISI -->
-                        <div>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Divisi</label>
-                            <select name="divisi_id" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
-                                <option value="">-- Tidak Ada Divisi --</option>
-                                @foreach($divisis as $divisi)
-                                    <option value="{{ $divisi->id }}" {{ old('divisi_id') == $divisi->id ? 'selected' : '' }}>
-                                        {{ $divisi->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Jika Role Ketua, Divisi harus dipilih & belum ada Ketua.</p>
+                            <label for="email" class="block text-sm font-bold mb-2 text-stone-800">Email</label>
+                            <input type="email" name="email" id="email" value="{{ old('email') }}" required 
+                                   class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                         </div>
                         
-                        <!-- KUOTA CUTI (Tambahkan x-show) -->
-                        <div x-show="role === 'user' || role === 'ketua_divisi'" x-transition>
-                            <label class="block text-sm font-bold mb-2 text-stone-800">Kuota Cuti (Hari)</label>
-                            <input type="number" name="kuota_cuti" value="{{ old('kuota_cuti', 12) }}" min="0" class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                        <!-- ROLE -->
+                        <div>
+                            <label for="role" class="block text-sm font-bold mb-2 text-stone-800">Role / Jabatan</label>
+                            <select name="role" id="role" required x-model="role"
+                                    class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                                @foreach($roles as $r)
+                                    <option value="{{ $r }}" {{ old('role') == $r ? 'selected' : '' }}>
+                                        {{ ucfirst(str_replace('_', ' ', $r)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- DIVISI (Hanya muncul jika Role = ketua_divisi atau user) -->
+                        <div x-show="role === 'ketua_divisi' || role === 'user'" class="transition-all duration-300">
+                            <label for="divisi_id" class="block text-sm font-bold mb-2 text-stone-800">Divisi</label>
+                            <select name="divisi_id" id="divisi_id" 
+                                    class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                                
+                                {{-- PERBAIKAN LOGIKA: Opsi NULL menjadi Opsional untuk semua role User/Ketua --}}
+                                <option value="" {{ old('divisi_id') === null ? 'selected' : '' }}>
+                                    -- Pilih Divisi (Opsional) --
+                                </option>
+                                
+                                @foreach($divisis as $divisi)
+                                    @php
+                                        // Variabel PHP untuk status Divisi
+                                        $isOccupied = $divisi->ketua_divisi_id ? 'true' : 'false';
+                                        $isCurrentValue = old('divisi_id') == $divisi->id ? 'true' : 'false';
+                                    @endphp
+
+                                    <option value="{{ $divisi->id }}" 
+                                            {{ $isCurrentValue === 'true' ? 'selected' : '' }}
+                                            
+                                            {{-- LOGIKA FILTER UTAMA: HIDE jika Role=Ketua Divisi DAN Divisi sudah terisi --}}
+                                            x-bind:hidden="role === 'ketua_divisi' && {{ $isOccupied }} && !{{ $isCurrentValue }}"
+                                            
+                                            {{-- Nonaktifkan opsi jika: Role bukan Ketua Divisi TAPI Divisi sudah terisi (Ini hanya berlaku jika user berganti role dari user ke user, agar tidak salah pilih divisi berketua) --}}
+                                            x-bind:disabled="role !== 'ketua_divisi' && {{ $isOccupied }}"
+                                            >
+                                        {{ $divisi->nama }} 
+                                        @if($divisi->ketua_divisi_id)
+                                            (Sudah ada Ketua)
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p x-show="role === 'ketua_divisi'" class="text-xs text-red-500 mt-1">Hanya Divisi yang belum memiliki Ketua yang ditampilkan.</p>
+                            <p x-show="role === 'user'" class="text-xs text-gray-500 mt-1">Pilih Divisi, atau biarkan kosong jika belum ditentukan.</p>
+                        </div>
+                        
+                        <!-- KUOTA CUTI (Hanya muncul jika Role = user atau ketua_divisi) -->
+                        <div x-show="role === 'user' || role === 'ketua_divisi'" class="transition-all duration-300">
+                            <label for="kuota_cuti" class="block text-sm font-bold mb-2 text-stone-800">Kuota Cuti (Hari)</label>
+                            <input type="number" name="kuota_cuti" id="kuota_cuti" value="{{ old('kuota_cuti', 12) }}" min="0" 
+                                   class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
                             <p class="text-xs text-gray-500 mt-1">Default 12 hari untuk User/Ketua.</p>
+                        </div>
+                        
+                        <!-- PASSWORD -->
+                        <div class="md:col-span-2 border-t pt-6 mt-4" style="border-color: #f0f0f0;">
+                            <p class="text-sm font-bold text-stone-800 mb-4">Set Password Awal</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="password" class="block text-sm font-bold mb-2 text-stone-800">Password Baru</label>
+                                    <input type="password" name="password" id="password" required 
+                                        class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                                </div>
+                                <div>
+                                    <label for="password_confirmation" class="block text-sm font-bold mb-2 text-stone-800">Konfirmasi Password</label>
+                                    <input type="password" name="password_confirmation" id="password_confirmation" required 
+                                        class="w-full border-gray-300 rounded-xl px-4 py-2.5 text-stone-700 focus:border-amber-500 focus:ring-amber-500 shadow-sm" style="border-radius: 12px; border-color: #f0f0f0;">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
