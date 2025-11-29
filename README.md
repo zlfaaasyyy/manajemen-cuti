@@ -1,59 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistem Manajemen Cuti Karyawan (E-Leave System)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web berbasis Laravel untuk mendigitalisasi proses pengajuan dan persetujuan cuti karyawan dengan alur multilevel yang rapi, transparan, dan akurat.
 
-## About Laravel
+## 📌 Deskripsi Proyek
+Sistem Manajemen Cuti Karyawan (E-Leave System) dikembangkan untuk membantu perusahaan mengelola proses cuti secara digital dan efisien. Dibangun menggunakan Laravel dan Tailwind CSS, sistem ini mendukung alur persetujuan dua tingkat, otomatisasi kuota, hingga pembuatan dokumen cuti berbentuk PDF. Tujuan utama mencakup pengelolaan kuota realtime, persetujuan berjenjang, dan penghapusan proses berbasis kertas.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🔐 Peran Pengguna & Fitur Utama
+### Admin
+- CRUD User & Divisi  
+- Statistik global  
+- Daftar karyawan baru (< 1 tahun)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### HRD
+- Verifikasi final (Level 2)  
+- Bulk approve/reject  
+- Dashboard laporan  
+- Tidak dapat dihapus
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Ketua Divisi
+- Verifikasi awal (Level 1)  
+- Dashboard tim  
+- Kuota pribadi  
+- Bisa mengajukan cuti pribadi
 
-## Learning Laravel
+### User
+- Pengajuan cuti  
+- Melihat kuota realtime  
+- Riwayat pengajuan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## ⚙️ Fungsionalitas Utama
+| Modul | Deskripsi |
+|-------|-----------|
+| Pengajuan | Validasi overlap + hitung hari kerja |
+| Kuota | Berkurang hanya setelah approved final |
+| Verifikasi | Catatan wajib saat reject |
+| PDF | Cetak Surat Cuti |
+| Foto Profil | Replace otomatis foto lama |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Instalasi & Setup (Full Dalam Satu Blok)
+Semua langkah instalasi digabung menjadi satu alur tanpa dipisah agar mudah di-copy.
 
-## Laravel Sponsors
+### **Langkah Setup**
+**1. Clone Repositori**
+```bash
+git clone [URL_REPOSITORY_ANDA]
+cd nama-folder-proyek
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**2. Instal Dependensi Backend & Frontend**
+```bash
+composer install
+npm install
+```
 
-### Premium Partners
+**3. Konfigurasi Environment**
+```bash
+cp .env.example .env
+php artisan key:generate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Edit file .env dan sesuaikan:
+# DB_HOST
+# DB_DATABASE
+# DB_USERNAME
+# DB_PASSWORD
+```
 
-## Contributing
+**4. Migrasi Database + Seeder Default**
+```bash
+php artisan migrate --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**5. Setup Storage (Foto Profil)**
+```bash
+php artisan storage:link
+```
 
-## Code of Conduct
+**6. Jalankan Server Backend & Frontend**
+```bash
+npm run dev
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Akses di: http://127.0.0.1:8000/
