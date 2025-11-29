@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\Divisi; // Diperlukan untuk membuat relasi Divisi
+use App\Models\Divisi; 
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -14,8 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. BUAT AKUN SISTEM (ADMIN & HRD)
-        
         $admin = User::create([
             'name' => 'Administrator',
             'username' => 'admin123', 
@@ -34,16 +32,13 @@ class DatabaseSeeder extends Seeder
             'kuota_cuti' => 0, 
         ]);
 
-        // 2. BUAT DATA DIVISI & AKUN KETUA DIVISI
-
-        // Ketua Divisi 1: Engineering
         $ketua_eng = User::create([
             'name' => 'Nur Atika Binti Ardi',
             'username' => 'nuratika',
             'email' => 'nuratika@kantor.com',
             'password' => Hash::make('password123'),
             'role' => 'ketua_divisi',
-            'kuota_cuti' => 12, // Kuota User
+            'kuota_cuti' => 12, 
         ]);
 
         $divisi_eng = Divisi::create([
@@ -52,11 +47,8 @@ class DatabaseSeeder extends Seeder
             'ketua_divisi_id' => $ketua_eng->id,
         ]);
         
-        // Update Divisi ID untuk Ketua
         $ketua_eng->update(['divisi_id' => $divisi_eng->id]);
 
-
-        // Ketua Divisi 2: Marketing
         $ketua_mkt = User::create([
             'name' => 'Nurul Fakhira',
             'username' => 'fakhira',
@@ -72,11 +64,7 @@ class DatabaseSeeder extends Seeder
             'ketua_divisi_id' => $ketua_mkt->id,
         ]);
         
-        // Update Divisi ID untuk Ketua
         $ketua_mkt->update(['divisi_id' => $divisi_mkt->id]);
-
-
-        // 3. BUAT AKUN USER BIASA (KARYAWAN)
 
         User::create([
             'name' => 'Daffa Usman',
@@ -98,7 +86,6 @@ class DatabaseSeeder extends Seeder
             'kuota_cuti' => 12,
         ]);
         
-        // Akun User Tambahan (Tanpa Divisi)
         User::create([
             'name' => 'Hilmy Afayyad',
             'username' => 'hilmy',
