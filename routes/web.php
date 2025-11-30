@@ -52,8 +52,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Modul HRD
     Route::get('/hrd/verifikasi', [LeaveRequestController::class, 'hrdIndex'])->name('hrd.leaves.index');
-    Route::post('/hrd/verifikasi/{leaveRequest}', [LeaveRequestController::class, 'hrdAction'])->name('hrd.leaves.action');
+    
+    // [PERBAIKAN] Pindahkan rute statis 'bulk' ke atas rute dinamis '{leaveRequest}'
     Route::post('/hrd/verifikasi/bulk', [LeaveRequestController::class, 'hrdBulkAction'])->name('hrd.leaves.bulk_action');
+    
+    Route::post('/hrd/verifikasi/{leaveRequest}', [LeaveRequestController::class, 'hrdAction'])->name('hrd.leaves.action');
     
     Route::get('/laporan-cuti', [LeaveRequestController::class, 'report'])->name('leaves.report');
 });

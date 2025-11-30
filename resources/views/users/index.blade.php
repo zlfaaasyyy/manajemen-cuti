@@ -8,17 +8,19 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
             
-            <!-- Notifikasi Sukses/Error -->
             @if(session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-sm flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     {{ session('success') }}
                 </div>
             @endif
+            @if(session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-sm flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ session('error') }}
+                </div>
+            @endif
 
-            <!-- ============================================= -->
-            <!-- TABEL 1: KARYAWAN SEDANG CUTI -->
-            <!-- ============================================= -->
             @if($usersOnLeave->count() > 0)
             <div class="bg-white overflow-hidden shadow-xl rounded-[30px] border border-gray-100">
                 <div class="p-8 bg-white border-b border-gray-100">
@@ -90,9 +92,6 @@
             </div>
             @endif
 
-            <!-- ============================================= -->
-            <!-- TABEL 2: DAFTAR PENGGUNA AKTIF -->
-            <!-- ============================================= -->
             <div class="bg-white overflow-hidden shadow-xl rounded-[30px] border border-gray-100">
                 <div class="p-8 bg-white border-b border-gray-100">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -107,7 +106,62 @@
                             </a>
                         </div>
                     </div>
+                    
+                    <div class="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <form method="GET" action="{{ route('users.index') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                            
+                            <div>
+                                <label for="role" class="block text-xs font-medium text-gray-700 mb-1">Filter Role</label>
+                                <select name="role" id="role" class="w-full border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-amber-500">
+                                    <option value="all">Semua Role</option>
+                                    @foreach($roles as $r)
+                                        <option value="{{ $r }}" {{ request('role') == $r ? 'selected' : '' }}>
+                                            {{ ucfirst(str_replace('_', ' ', $r)) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
 
+                            <div>
+                                <label for="divisi_id" class="block text-xs font-medium text-gray-700 mb-1">Filter Divisi</label>
+                                <select name="divisi_id" id="divisi_id" class="w-full border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-amber-500">
+                                    <option value="all">Semua Divisi</option>
+                                    @foreach($divisis as $d)
+                                        <option value="{{ $d->id }}" {{ request('divisi_id') == $d->id ? 'selected' : '' }}>
+                                            {{ $d->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="sort_by" class="block text-xs font-medium text-gray-700 mb-1">Sortir Berdasarkan</label>
+                                <div class="flex space-x-2">
+                                    <select name="sort_by" id="sort_by" class="flex-1 border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-amber-500">
+                                        <option value="name" {{ request('sort_by', 'name') == 'name' ? 'selected' : '' }}>Nama</option>
+                                        <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>Tgl Bergabung</option>
+                                        <option value="divisi_id" {{ request('sort_by') == 'divisi_id' ? 'selected' : '' }}>Divisi</option>
+                                        <option value="kuota_cuti" {{ request('sort_by') == 'kuota_cuti' ? 'selected' : '' }}>Kuota Cuti</option>
+                                    </select>
+                                    <select name="sort_order" id="sort_order" class="w-20 border-gray-300 rounded-lg text-sm focus:border-amber-500 focus:ring-amber-500">
+                                        <option value="asc" {{ request('sort_order', 'asc') == 'asc' ? 'selected' : '' }}>ASC</option>
+                                        <option value="desc" {{ request('sort_order') == 'desc' ? 'selected' : '' }}>DESC</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button type="submit" class="px-4 py-2 bg-amber-500 text-white font-semibold text-sm rounded-lg hover:bg-amber-600 transition w-full">
+                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                    Filter
+                                </button>
+                                <a href="{{ route('users.index') }}" class="px-4 py-2 bg-white text-gray-700 font-semibold text-sm rounded-lg border border-gray-300 hover:bg-gray-100 transition w-full text-center">
+                                    Reset
+                                </a>
+                            </div>
+
+                        </form>
+                    </div>
                     <div class="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -148,7 +202,6 @@
                                         {{ $user->divisi->nama ?? '-' }}
                                     </td>
                                     
-                                    <!-- LOGIKA TAMPILAN KUOTA: Admin/HRD = Strip (-) -->
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-800 font-bold">
                                         @if($user->role == 'user' || $user->role == 'ketua_divisi')
                                             <span class="{{ $user->kuota_cuti == 0 ? 'text-red-500' : 'text-green-600' }}">
@@ -165,8 +218,7 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                             </a>
                                             
-                                            <!-- Tombol Hapus - DENGAN KONDISI BARU -->
-                                            @if(auth()->user()->role === 'admin' && auth()->id() !== $user->id && $user->role !== 'hrd')
+                                            @if(auth()->user()->role === 'admin' && auth()->id() !== $user->id && ($user->role === 'user' || $user->role === 'ketua_divisi'))
                                             <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->name }}?');">
                                                 @csrf
                                                 @method('DELETE')

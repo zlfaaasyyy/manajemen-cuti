@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $now = Carbon::now();
 
@@ -31,12 +31,51 @@ class UserController extends Controller
         $onLeaveIds = $usersOnLeave->pluck('id')->toArray();
 
         // Ambil User AKTIF (Sisanya)
-        $users = User::whereNotIn('id', $onLeaveIds)
-            ->with('divisi')
-            ->orderBy('name', 'asc')
-            ->paginate(10); 
+        $usersQuery = User::whereNotIn('id', $onLeaveIds)->with('divisi');
 
-        return view('users.index', compact('users', 'usersOnLeave'));
+        // =========================================================
+        // START: FITUR FILTER & SORTIR BARU
+        // =========================================================
+
+        // 1. FILTER BERDASARKAN ROLE
+        if ($request->filled('role') && $request->role != 'all') {
+            $usersQuery->where('role', $request->role);
+        }
+        
+        // 2. FILTER BERDASARKAN DIVISI
+        if ($request->filled('divisi_id') && $request->divisi_id != 'all') {
+            $usersQuery->where('divisi_id', $request->divisi_id);
+        }
+        
+        // 3. SORTIR
+        $sortBy = $request->get('sort_by', 'name'); // Default sort: name
+        $sortOrder = $request->get('sort_order', 'asc'); // Default order: asc
+
+        // Validasi Sortir
+        if (in_array($sortBy, ['name', 'created_at', 'kuota_cuti'])) {
+            $usersQuery->orderBy($sortBy, $sortOrder);
+        } 
+        // Tambahan logika khusus untuk sorting berdasarkan nama divisi
+        elseif ($sortBy == 'divisi_id') {
+            $usersQuery->leftJoin('divisis', 'users.divisi_id', '=', 'divisis.id')
+                       ->orderBy('divisis.nama', $sortOrder)
+                       ->select('users.*'); // Pilih kembali kolom users
+        } else {
+             $usersQuery->orderBy('name', 'asc'); // Fallback
+        }
+        // =========================================================
+        // END: FITUR FILTER & SORTIR BARU
+        // =========================================================
+
+
+        $users = $usersQuery->paginate(10)->withQueryString(); 
+        
+        // Data tambahan untuk View (Diperlukan untuk Filter Options di index)
+        $divisis = Divisi::all();
+        $roles = ['admin', 'hrd', 'ketua_divisi', 'user']; // Semua role yang mungkin
+        
+
+        return view('users.index', compact('users', 'usersOnLeave', 'divisis', 'roles'));
     }
 
     public function create()
@@ -63,6 +102,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users', // <--- [MODIFIKASI/BARU] Validasi Username
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
@@ -90,6 +130,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username, // <--- [MODIFIKASI/BARU] Simpan Username
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
@@ -130,6 +171,7 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)], // <--- [MODIFIKASI/BARU] Validasi Username
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)], 
             'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
             'divisi_id' => [
@@ -151,7 +193,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $data = $request->only(['name', 'email', 'role', 'divisi_id']);
+        $data = $request->only(['name', 'username', 'email', 'role', 'divisi_id']); // <--- [MODIFIKASI] Masukkan username ke data
 
         // Force Kuota 0 untuk Admin/HRD
         if (in_array($request->role, ['admin', 'hrd'])) {

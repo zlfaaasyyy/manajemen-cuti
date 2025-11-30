@@ -14,7 +14,7 @@ class DivisiController extends Controller
     {
         $query = Divisi::with('ketuaDivisi')->withCount('users');
 
-        // Filter Pencarian
+        // Filter Pencarian (Berdasarkan nama divisi atau ketua divisi)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -25,22 +25,22 @@ class DivisiController extends Controller
             });
         }
 
-        // Filter Sortir
-        if ($request->filled('sort')) {
-            switch ($request->sort) {
-                case 'nama_asc': $query->orderBy('nama', 'asc'); break;
-                case 'nama_desc': $query->orderBy('nama', 'desc'); break;
-                case 'anggota_banyak': $query->orderBy('users_count', 'desc'); break;
-                case 'anggota_sedikit': $query->orderBy('users_count', 'asc'); break;
-                case 'terbaru': $query->orderBy('created_at', 'desc'); break;
-            }
-        } else {
-            $query->orderBy('nama', 'asc');
+        // Filter Sortir (Disempurnakan untuk mencakup tanggal pembuatan)
+        $sort = $request->get('sort', 'nama_asc');
+        switch ($sort) {
+            case 'nama_asc': $query->orderBy('nama', 'asc'); break;
+            case 'nama_desc': $query->orderBy('nama', 'desc'); break;
+            case 'anggota_banyak': $query->orderBy('users_count', 'desc'); break;
+            case 'anggota_sedikit': $query->orderBy('users_count', 'asc'); break;
+            case 'terbaru': $query->orderBy('created_at', 'desc'); break;
+            case 'terlama': $query->orderBy('created_at', 'asc'); break; // [BARU] Sortir berdasarkan tanggal terlama
+            default: $query->orderBy('nama', 'asc'); break;
         }
 
         // PERBAIKAN: Mengganti nama variabel pengiriman menjadi $divisis (Jamak)
         $divisis = $query->get();
-        return view('divisi.index', compact('divisis')); // Menggunakan $divisis
+        // [BARU] Mengirim $request untuk mempertahankan status filter/sortir
+        return view('divisi.index', compact('divisis', 'request'));
     }
 
     // --- FITUR UTAMA: SHOW (DETAIL & ANGGOTA) ---
@@ -70,7 +70,8 @@ class DivisiController extends Controller
 
         $user = User::find($request->user_id);
         
-        if ($user->divisi_id) {
+        // [KOREKSI] Cek apakah user sudah ketua di divisi lain (logika ini lebih cocok di update user, tapi tetap dipertahankan untuk jaga-jaga)
+        if ($user->divisi_id && $user->divisi_id != $divisi->id) { 
             return back()->with('error', 'User tersebut sudah memiliki divisi lain.');
         }
 
@@ -82,6 +83,11 @@ class DivisiController extends Controller
     // --- FITUR BARU: HAPUS ANGGOTA (KELUARKAN) ---
     public function removeMember(User $user)
     {
+        // [KOREKSI] Mencegah mengeluarkan user jika dia adalah Ketua divisi yang bersangkutan (meskipun sudah dicek di view)
+        if ($user->divisiKetua && $user->divisiKetua->ketua_divisi_id == $user->id) {
+            return back()->with('error', 'Ketua divisi tidak dapat dikeluarkan. Silakan ganti ketua divisi terlebih dahulu.');
+        }
+        
         $user->update(['divisi_id' => null]);
         return back()->with('success', 'Anggota berhasil dikeluarkan dari divisi.');
     }
@@ -115,6 +121,7 @@ class DivisiController extends Controller
     public function edit(Divisi $divisi)
     {
         $currentLeaderId = $divisi->ketua_divisi_id;
+        // [KOREKSI] Logika: Ambil semua Ketua Divisi, yang tidak sedang memimpin OR ID-nya sama dengan Ketua Divisi saat ini.
         $availableLeaders = User::where('role', 'ketua_divisi')
             ->where(function ($query) use ($currentLeaderId) {
                 $query->whereDoesntHave('divisiKetua')->orWhere('id', $currentLeaderId);
@@ -130,17 +137,34 @@ class DivisiController extends Controller
             'ketua_divisi_id' => ['required', 'exists:users,id'],
             'deskripsi' => 'nullable|string',
         ]);
+        
+        // 1. Cek apakah ketua divisi berubah
+        $oldLeaderId = $divisi->ketua_divisi_id;
+        $newLeaderId = $request->ketua_divisi_id;
 
+        // 2. Update Divisi
         $divisi->update($request->all());
 
-        User::find($request->ketua_divisi_id)->update(['divisi_id' => $divisi->id]);
+        // 3. Update relasi di tabel Users
+        if ($oldLeaderId !== $newLeaderId) {
+            // Hapus relasi divisi lama dari ketua lama
+            if ($oldLeaderId) {
+                User::where('id', $oldLeaderId)->update(['divisi_id' => null]);
+            }
+        }
+        // Pastikan ketua baru terikat ke divisi ini (termasuk jika ketua sama)
+        User::where('id', $newLeaderId)->update(['divisi_id' => $divisi->id]);
 
         return redirect()->route('divisi.index')->with('success', 'Divisi diperbarui.');
     }
 
     public function destroy(Divisi $divisi)
     {
+        // Set divisi_id semua anggota di divisi ini menjadi NULL
         User::where('divisi_id', $divisi->id)->update(['divisi_id' => null]);
+        // [KOREKSI] Reset ketua_divisi_id di tabel divisi itu sendiri (meskipun relasi akan hilang)
+        $divisi->update(['ketua_divisi_id' => null]); 
+        
         $divisi->delete();
         return redirect()->route('divisi.index')->with('success', 'Divisi dihapus.');
     }
