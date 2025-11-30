@@ -7,10 +7,7 @@
 
     <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
-<<<<<<< HEAD
             
-=======
->>>>>>> 34911a05c55ea847ea8129b7d6dfce84fbd27732
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
                     {{ session('success') }}

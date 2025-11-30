@@ -16,7 +16,6 @@ class UserController extends Controller
     {
         $now = Carbon::now();
 
-        // Ambil User yang SEDANG CUTI
         $usersOnLeave = User::whereIn('role', ['user', 'ketua_divisi'])
             ->whereHas('leaveRequests', function($q) use ($now) {
                 $q->where('status', 'approved')
@@ -30,49 +29,33 @@ class UserController extends Controller
 
         $onLeaveIds = $usersOnLeave->pluck('id')->toArray();
 
-        // Ambil User AKTIF (Sisanya)
         $usersQuery = User::whereNotIn('id', $onLeaveIds)->with('divisi');
 
-        // =========================================================
-        // START: FITUR FILTER & SORTIR BARU
-        // =========================================================
-
-        // 1. FILTER BERDASARKAN ROLE
         if ($request->filled('role') && $request->role != 'all') {
             $usersQuery->where('role', $request->role);
         }
-        
-        // 2. FILTER BERDASARKAN DIVISI
+
         if ($request->filled('divisi_id') && $request->divisi_id != 'all') {
             $usersQuery->where('divisi_id', $request->divisi_id);
         }
-        
-        // 3. SORTIR
-        $sortBy = $request->get('sort_by', 'name'); // Default sort: name
-        $sortOrder = $request->get('sort_order', 'asc'); // Default order: asc
 
-        // Validasi Sortir
+        $sortBy = $request->get('sort_by', 'name'); 
+        $sortOrder = $request->get('sort_order', 'asc'); 
+
         if (in_array($sortBy, ['name', 'created_at', 'kuota_cuti'])) {
             $usersQuery->orderBy($sortBy, $sortOrder);
         } 
-        // Tambahan logika khusus untuk sorting berdasarkan nama divisi
         elseif ($sortBy == 'divisi_id') {
             $usersQuery->leftJoin('divisis', 'users.divisi_id', '=', 'divisis.id')
                        ->orderBy('divisis.nama', $sortOrder)
-                       ->select('users.*'); // Pilih kembali kolom users
+                       ->select('users.*'); 
         } else {
-             $usersQuery->orderBy('name', 'asc'); // Fallback
+             $usersQuery->orderBy('name', 'asc'); 
         }
-        // =========================================================
-        // END: FITUR FILTER & SORTIR BARU
-        // =========================================================
-
-
+ 
         $users = $usersQuery->paginate(10)->withQueryString(); 
-        
-        // Data tambahan untuk View (Diperlukan untuk Filter Options di index)
         $divisis = Divisi::all();
-        $roles = ['admin', 'hrd', 'ketua_divisi', 'user']; // Semua role yang mungkin
+        $roles = ['admin', 'hrd', 'ketua_divisi', 'user']; 
         
 
         return view('users.index', compact('users', 'usersOnLeave', 'divisis', 'roles'));
@@ -82,15 +65,12 @@ class UserController extends Controller
     {
         $divisis = Divisi::all();
         
-        // LOGIKA FILTER ROLE:
         $roles = ['ketua_divisi', 'user']; 
 
-        // Cek apakah slot HRD masih kosong?
         if (!User::where('role', 'hrd')->exists()) {
             array_unshift($roles, 'hrd'); 
         }
 
-        // Cek apakah slot Admin masih kosong?
         if (!User::where('role', 'admin')->exists()) {
             array_unshift($roles, 'admin'); 
         }
@@ -102,7 +82,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users', // <--- [MODIFIKASI/BARU] Validasi Username
+            'username' => 'required|string|max:255|unique:users', 
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(['admin', 'hrd', 'ketua_divisi', 'user'])],
@@ -130,7 +110,7 @@ class UserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
-            'username' => $request->username, // <--- [MODIFIKASI/BARU] Simpan Username
+            'username' => $request->username, 
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
@@ -150,13 +130,11 @@ class UserController extends Controller
         $divisis = Divisi::all(); 
         $roles = ['ketua_divisi', 'user'];
 
-        // Cek slot HRD (Kecuali user ini sendiri adalah HRD)
         $hrdExists = User::where('role', 'hrd')->where('id', '!=', $user->id)->exists();
         if (!$hrdExists) {
              array_unshift($roles, 'hrd');
         }
 
-        // Cek slot Admin (Kecuali user ini sendiri adalah Admin)
         $adminExists = User::where('role', 'admin')->where('id', '!=', $user->id)->exists();
         if (!$adminExists) {
             array_unshift($roles, 'admin');
@@ -181,7 +159,6 @@ class UserController extends Controller
                     function ($attribute, $value, $fail) use ($user) {
                         if ($value) {
                             $divisi = Divisi::find($value);
-                            // Cek jika divisi sudah punya ketua DAN ketuanya bukan user ini
                             if ($divisi->ketua_divisi_id !== null && $divisi->ketua_divisi_id !== $user->id) {
                                 $fail('Divisi ini sudah memiliki Ketua.');
                             }
@@ -195,7 +172,6 @@ class UserController extends Controller
 
         $data = $request->only(['name', 'username', 'email', 'role', 'divisi_id']); // <--- [MODIFIKASI] Masukkan username ke data
 
-        // Force Kuota 0 untuk Admin/HRD
         if (in_array($request->role, ['admin', 'hrd'])) {
             $data['kuota_cuti'] = 0;
         } else {
@@ -206,19 +182,16 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
         
-        // Jika user sebelumnya Ketua Divisi, dan sekarang ganti Divisi atau ganti Role
         if ($user->role === 'ketua_divisi' && $currentManagedDivisiId && $currentManagedDivisiId != $request->divisi_id) {
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
         
         $user->update($data);
 
-        // Update Divisi baru
         if ($user->role === 'ketua_divisi' && $request->divisi_id) {
             Divisi::where('id', $request->divisi_id)->update(['ketua_divisi_id' => $user->id]);
         }
         
-        // Jika role berubah jadi bukan ketua, hapus kepemilikan
         if ($user->role !== 'ketua_divisi') {
              Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
@@ -228,17 +201,14 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // Rule 1: Cannot delete self
         if (auth()->id() === $user->id) {
              return back()->with('error', 'Gagal hapus akun sendiri.');
         }
 
-        // Rule 2: Cannot delete HRD (karena harus selalu ada dan hanya ada 1 slot)
         if ($user->role === 'hrd') {
             return back()->with('error', 'Akun HRD tidak dapat dihapus karena perannya vital dan harus selalu ada.');
         }
         
-        // Rule 3: Cannot delete the only Admin
         if ($user->role === 'admin') {
             $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
             if ($otherAdmins === 0) {
@@ -246,7 +216,6 @@ class UserController extends Controller
             }
         }
 
-        // Reset Ketua Divisi relationship if applicable
         if ($user->role === 'ketua_divisi') {
             Divisi::where('ketua_divisi_id', $user->id)->update(['ketua_divisi_id' => null]);
         }
