@@ -6,7 +6,6 @@
     </x-slot>
 
     <div class="py-12" style="background-color: #F8F8F8;">
-        <!-- Container Lebar -->
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             
             @if (session('success'))
@@ -20,10 +19,7 @@
                 </div>
             @endif
 
-            <!-- MAIN CARD: Detail Pengajuan -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
-                
-                <!-- HEADER & STATUS -->
                 <div class="flex justify-between items-start border-b pb-4 mb-6" style="border-color: #f0f0f0;">
                     <div>
                         <h3 class="text-3xl font-extrabold text-stone-800">{{ $leave->user->name }}</h3>
@@ -43,7 +39,6 @@
                     </div>
                 </div>
 
-                <!-- DETAIL UTAMA -->
                 <div class="grid grid-cols-2 gap-y-4 gap-x-8 text-sm mb-6">
                     <div class="col-span-2">
                         <p class="font-bold text-gray-700">Jenis Cuti:</p>
@@ -76,7 +71,6 @@
                     </div>
                 </div>
 
-                <!-- DOKUMEN PENDUKUNG -->
                 @if($leave->jenis_cuti == 'sakit' && $leave->bukti_sakit)
                     <div class="mt-6 border-t pt-4" style="border-color: #f0f0f0;">
                         <p class="font-bold text-gray-700 mb-2">Dokumen Pendukung (Surat Dokter):</p>
@@ -89,12 +83,9 @@
                     </div>
                 @endif
                 
-                <!-- TIMELINE PERSETUJUAN -->
                 <div class="mt-8 pt-6 border-t" style="border-color: #f0f0f0;">
                     <h4 class="text-xl font-extrabold text-stone-800 mb-4">Timeline Persetujuan</h4>
                     <ol class="relative border-s border-gray-200 ml-4">                  
-                        
-                        <!-- 1. KEPUTUSAN FINAL HRD -->
                         <li class="mb-6 ms-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3 ring-8 ring-white" 
                                   style="background-color: #473C33; color: white;">
@@ -121,7 +112,6 @@
                             @endif
                         </li>
                         
-                        <!-- 2. VERIFIKASI KETUA DIVISI (LOGIKA SUDAH FIX) -->
                         <li class="mb-6 ms-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3 ring-8 ring-white" 
                                   style="background-color: #ABC270; color: white;">
@@ -153,7 +143,6 @@
                             @endif
                         </li>
 
-                        <!-- 3. PENGAJUAN AWAL -->
                          <li class="ms-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -start-3 ring-8 ring-white" 
                                   style="background-color: #ABC270; color: white;">
@@ -173,7 +162,6 @@
                     </ol>
                 </div>
                 
-                <!-- TOMBOL AKSI KARYAWAN (Hanya untuk User yang mengajukan dan status masih pending/approved_leader) -->
                 @if(auth()->user()->id == $leave->user_id && in_array($leave->status, ['pending', 'approved_leader']))
                     <div class="mt-8 pt-6 border-t flex justify-end" style="border-color: #f0f0f0;">
                         <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'cancel-modal')" 
@@ -187,11 +175,10 @@
         </div>
     </div>
 
-    <!-- MODAL BATALKAN PENGAJUAN -->
     <x-modal name="cancel-modal" focusable>
         <form method="POST" action="{{ route('leaves.cancel', $leave->id) }}" class="p-6">
             @csrf
-            @method('DELETE') <!-- Mengubah PATCH menjadi DELETE agar konsisten dengan route delete -->
+            @method('DELETE') 
             
             <h2 class="text-xl font-bold text-red-600 flex items-center">
                 <span class="bg-red-100 text-red-600 p-2 rounded-full mr-3">

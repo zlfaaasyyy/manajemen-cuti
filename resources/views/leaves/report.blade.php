@@ -7,17 +7,12 @@
 
     <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
-            
-            <!-- Filter & Download Section -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[24px] p-6 mb-8 border border-gray-100 flex justify-between items-center" style="box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
                 <h3 class="font-extrabold text-lg text-stone-800">Data Riwayat Pengajuan Cuti (Total: {{ $leaves->count() }})</h3>
                
             </div>
 
-
-            <!-- MAIN CARD: Tabel Data -->
             <div class="bg-white overflow-hidden shadow-2xl rounded-[30px] p-8 border border-gray-100" style="box-shadow: 0 15px 30px rgba(0,0,0,0.05);">
-                
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead style="background-color: #F8F8F8;">
@@ -51,7 +46,6 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm font-bold text-stone-800">{{ $leave->total_hari }} Hari</td>
 
-                                <!-- TOMBOL DOWNLOAD PDF (Hijau Lumut #ABC270) -->
                                 <td class="px-4 py-3 text-sm font-medium">
                                     @if($leave->status == 'approved')
                                         <a href="{{ route('leaves.pdf', $leave->id) }}" class="text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:opacity-90 transition" style="background-color: #ABC270;">

@@ -20,7 +20,6 @@ class LeaveRequest extends Model
         'status',
         'catatan_leader',
         'catatan_penolakan',
-        // TAMBAHAN BARU
         'alamat_selama_cuti', 
         'nomor_darurat'
     ];

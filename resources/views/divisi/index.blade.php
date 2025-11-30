@@ -7,7 +7,6 @@
 
     <div class="py-12" style="background-color: #F8F8F8;">
         <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
-            
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-xl shadow-sm">
                     {{ session('success') }}
@@ -77,7 +76,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            {{-- PERBAIKAN: Menggunakan $divisis dari controller --}}
                             @forelse($divisis as $divisi)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-stone-800">
@@ -87,7 +85,6 @@
                                     <p class="text-xs text-gray-500 mt-1">Dibuat: {{ $divisi->created_at->format('d M Y') }}</p>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{-- PERBAIKAN: Menggunakan relasi ketuaDivisi --}}
                                     {{ $divisi->ketuaDivisi->name ?? 'Belum Ditunjuk' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-800">

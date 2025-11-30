@@ -1,8 +1,6 @@
 <x-guest-layout>
-    <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <!-- Card Container -->
     <div class="p-8 bg-white rounded-[30px] max-w-sm w-full" 
          style="box-shadow: 0 10px 20px rgba(0,0,0,0.05), 0 0 0 1px #f0f0f0; border: none; background-color: #FFFFFF; transition: all 0.3s ease;">
         
@@ -21,7 +19,6 @@
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
-            <!-- Email Address -->
             <div class="mb-4">
                 <label for="email" class="block font-medium text-sm text-gray-700">
                     Email / Username
@@ -34,7 +31,6 @@
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
 
-            <!-- Password -->
             <div class="mb-4">
                 <label for="password" class="block font-medium text-sm text-gray-700">
                     Password
@@ -47,7 +43,6 @@
                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
             </div>
 
-            <!-- Remember Me & Forgot Password -->
             <div class="flex items-center justify-between mt-4 mb-6">
                 <label for="remember_me" class="inline-flex items-center">
                     <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500" name="remember">
@@ -61,7 +56,6 @@
                 @endif
             </div>
 
-            <!-- TOMBOL MASUK -->
             <div class="mt-6 pb-2">
                 <button type="submit" 
                         class="w-full py-3 text-sm font-bold text-white rounded-xl shadow-lg transition"
